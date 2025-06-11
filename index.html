@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Step City Builder</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>Step City Builder</h1>
+    <div id="step-count-container">
+      Steps: <span id="step-count">1000</span>
+    </div>
+    <button id="reset-button">Reset</button>
+  </header>
+
+  <button id="build-toggle" class="circle-btn" aria-label="Toggle build mode">🔨</button>
+
+  <div id="building-options" class="hidden">
+    <button class="building-btn circle-btn" data-name="house" data-cost="100" aria-label="Build House">🏠</button>
+    <button class="building-btn circle-btn" data-name="shop" data-cost="200" aria-label="Build Shop">🏪</button>
+    <button class="building-btn circle-btn" data-name="park" data-cost="150" aria-label="Build Park">🌳</button>
+  </div>
+
+  <div id="confirm-buttons" class="hidden">
+    <button id="confirm-build" class="confirm-circle-btn confirm-btn">✓</button>
+    <button id="cancel-build" class="confirm-circle-btn cancel-btn">✗</button>
+  </div>
+  
+  
+  
+
+  <main>
+    <div id="grid-wrapper">
+      <div id="grid"></div>
+    </div>
+  </main>
+
+  <script type="module">
+    import Panzoom from 'https://cdn.skypack.dev/@panzoom/panzoom';
+  
+    const grid = document.getElementById('grid');
+    const wrapper = document.getElementById('grid-wrapper');
+  
+    const panzoom = Panzoom(grid, {
+      maxScale: 3,
+      minScale: 0.5,
+      contain: 'outside'
+    });
+  
+    wrapper.addEventListener('wheel', panzoom.zoomWithWheel);
+  </script>
+  
+
+  
+
+  <script src="script.js"></script>
+</body>
+</html>
