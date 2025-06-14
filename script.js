@@ -23,9 +23,9 @@ const buildingSizes = {
   };
   
   const treeImages = [
-    "/images/Tree1-removebg-preview.png",
-    "/images/Tree2-removebg-preview.png",
-    "/images/Tree3-removebg-preview.png"
+    "./images/Tree1-removebg-preview.png",
+    "./images/Tree2-removebg-preview.png",
+    "./images/Tree3-removebg-preview.png"
     // add as many as you want
   ];
 
