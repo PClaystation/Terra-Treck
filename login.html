@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login/Register Toggle</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #565656, #282828);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #333;
+    }
+    .login-container {
+      background: white;
+      padding: 2.5rem 3rem;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+      width: 320px;
+      text-align: center;
+      position: relative; /* for absolutely positioned forms */
+      height: 570px; /* fixed height to fit tallest form */
+      overflow: hidden;
+    }
+
+    /* Brand logo */
+    .brand-logo {
+      display: block;
+      margin: 0 auto 1.5rem auto;
+      max-width: 200px;
+      height: auto;
+    }
+
+    /* Toggle buttons container */
+    .toggle-buttons {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 2rem;
+      gap: 1rem;
+    }
+    .toggle-btn {
+      cursor: pointer;
+      padding: 0.5rem 1.5rem;
+      border: none;
+      background: transparent;
+      font-size: 1rem;
+      font-weight: 400;
+      color: rgba(0,0,0,0.5);
+      transition: all 0.3s ease;
+      border-bottom: 3px solid transparent;
+      user-select: none;
+    }
+    .toggle-btn.selected {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: rgba(0,0,0,0.9);
+      border-bottom: 3px solid #474747;
+    }
+
+    /* Forms are stacked absolutely inside container */
+    form {
+      position: absolute;
+      top: 325px; /* below logo and toggles */
+      left: 0;
+      width: 100%;
+      padding: 0 0.2rem; /* optional side padding */
+      transition: opacity 0.3s ease;
+    }
+
+    form.hidden {
+      opacity: 1;
+      pointer-events: none;
+      height: 0;
+      overflow: hidden;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 14px;
+      margin: 10px 0;
+      border: 1.8px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+      transition: border-color 0.3s ease;
+    }
+    input:focus {
+      border-color: #474747;
+      outline: none;
+    }
+    button.submit-btn {
+      width: 100%;
+      padding: 12px 0;
+      margin-top: 1.2rem;
+      background: #5a5a5a;
+      color: white;
+      font-weight: 600;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button.submit-btn:hover {
+      background: #474747;
+    }
+    #status {
+      position: absolute;
+      bottom: 20px;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      min-height: 20px;
+      color: #d33;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <img src="C2.png" alt="Brand logo" class="brand-logo">
+    <div class="toggle-buttons">
+      <button id="login-toggle" class="toggle-btn selected">Login</button>
+      <button id="register-toggle" class="toggle-btn">Register</button>
+    </div>
+
+    <form id="login-form">
+      <input type="email" id="login-email" placeholder="Email" />
+      <input type="password" id="login-password" placeholder="Password" />
+      <button type="button" id="login-btn" class="submit-btn">Login</button>
+    </form>
+
+    <form id="register-form" class="hidden">
+      <input type="email" id="register-email" placeholder="Email" />
+      <input type="password" id="register-password" placeholder="Password" />
+      <button type="button" id="register-btn" class="submit-btn">Register</button>
+    </form>
+
+    <div id="status"></div>
+  </div>
+
+  <script>
+    const apiBase = 'https://mpmc.ddns.net:5000/api/auth';
+    const statusDiv = document.getElementById('status');
+
+    const loginToggle = document.getElementById('login-toggle');
+    const registerToggle = document.getElementById('register-toggle');
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+
+    function switchToLogin() {
+      loginToggle.classList.add('selected');
+      registerToggle.classList.remove('selected');
+      loginForm.classList.remove('hidden');
+      registerForm.classList.add('hidden');
+      statusDiv.textContent = '';
+    }
+    function switchToRegister() {
+      registerToggle.classList.add('selected');
+      loginToggle.classList.remove('selected');
+      registerForm.classList.remove('hidden');
+      loginForm.classList.add('hidden');
+      statusDiv.textContent = '';
+    }
+
+    loginToggle.addEventListener('click', switchToLogin);
+    registerToggle.addEventListener('click', switchToRegister);
+    document.getElementById('login-btn').onclick = async () => {
+        const email = document.getElementById('login-email').value;
+        const password = document.getElementById('login-password').value;
+
+        try {
+            const res = await fetch(`${apiBase}/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+            });
+
+            const data = await res.json();
+            console.log(data)
+
+            if (res.ok) {
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('userId', data.userId);
+            statusDiv.style.color = 'green';
+            statusDiv.textContent = `Logged in as user ID: ${data.userId}`;
+            window.location.href = 'index.html';  // redirect back to your game page
+            } else {
+            statusDiv.style.color = '#d33';
+            statusDiv.textContent = data.message || 'Login failed';
+            }
+        } catch (err) {
+            statusDiv.style.color = '#d33';
+            statusDiv.textContent = 'Login error: ' + err.message;
+        }
+        };
+
+    document.getElementById('register-btn').onclick = async () => {
+    const email = document.getElementById('register-email').value;
+    const password = document.getElementById('register-password').value;
+
+    try {
+        const res = await fetch(`${apiBase}/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+        });
+
+        const data = await res.json();
+        console.log(data)
+
+        if (res.ok) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('userId', data.userId);
+        statusDiv.style.color = 'green';
+        statusDiv.textContent = `Registered & logged in as user ID: ${data.userId}`;
+        window.location.href = 'index.html';  // redirect back to your game page here
+        } else {
+        statusDiv.style.color = '#d33';
+        statusDiv.textContent = data.message || 'Registration failed';
+        }
+    } catch (err) {
+        statusDiv.style.color = '#d33';
+        statusDiv.textContent = 'Registration error: ' + err.message;
+    }
+    };
+
+  </script>
+</body>
+</html>
