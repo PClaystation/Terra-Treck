@@ -1,3 +1,4 @@
+
 /* Reset & base */
 * {
     box-sizing: border-box;
@@ -144,6 +145,7 @@
     overflow: hidden;
     touch-action: none; /* Critical for pinch/drag */
     position: relative;
+    z-index: 1;
   }
   
  #grid {
@@ -156,6 +158,7 @@
   user-select: none;
   position: relative;
   overflow: hidden;
+  z-index: 0;
 }
 
 #grid::after {
@@ -165,13 +168,12 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background-image: url('./images/grass-texture1.png'); /* <- is this the real path? */
+    background-image: url('./images/grass-texture1.png'); 
     background-repeat: repeat;
     opacity: 0.15;
     pointer-events: none;
-    z-index: 1;
+    z-index: -1;
   }
-  
   
   
   /* Tiles */
@@ -190,7 +192,8 @@
     border: 1px solid transparent;
     transition: border-color 0.5s ease;
     position: relative;
-    z-index: 1;
+    z-index: 2;
+    overflow: visible;
   }
   
   .tile.build-mode {
@@ -209,19 +212,24 @@
 
 
   .tile.house {
-    background-color: #f39c12;
+    background-color: #f39c12 !important;
     box-shadow: 0 0 10px #e67e22;
-    z-index: 100;
+    z-index: 3;
   }
   
+  
   .tile.shop {
-    background-color: #273dae;
+    background-color: #273dae !important;
     box-shadow: 0 0 10px #2e38cc;
+    z-index: 3;
+
   }
   
   .tile.park {
-    background-color: #16a085;
+    background-color: #16a085 !important;
     box-shadow: 0 0 10px #1abc9c;
+    z-index: 3;
+
   }
   
 

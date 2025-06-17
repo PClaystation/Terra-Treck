@@ -1,8 +1,8 @@
 const gridSize = 20;
-let steps = 1000;
 let selectedBuilding = null;
 let selectedCost = 0;
 let buildMode = false;
+let stepTotal = parseInt(localStorage.getItem("stepTotal") || 0);
 
 const grid = document.getElementById("grid");
 const stepCount = document.getElementById("step-count");
@@ -41,7 +41,7 @@ let lockedPreviewTiles = [];
 
 
 function updateStepCount() {
-  stepCount.textContent = steps;
+  stepCount.textContent = stepTotal;
 }
 
 function updateBuildingCounts() {
@@ -95,18 +95,18 @@ function hideConfirmButtons() {
 
 // Position confirm buttons near the tile (relative to grid container)
 function positionConfirmButtons(baseTile) {
-    if (!pendingTiles.length) return;
-  
-    // get bottom-right tile
-    const last = pendingTiles[pendingTiles.length - 1];
-    const rect = last.getBoundingClientRect();
-    const gridRect = grid.getBoundingClientRect();
-  
-    confirmButtons.classList.remove("hidden");  // unhide
-    confirmButtons.style.left = `${rect.right - gridRect.left + 10}px`;
-    confirmButtons.style.top  = `${rect.bottom - gridRect.top + 10}px`;
-    setTimeout(() => confirmButtons.classList.add("active"), 10);
-  }
+  if (!pendingTiles.length) return;
+
+  const rect = baseTile.getBoundingClientRect();
+  const gridRect = grid.getBoundingClientRect();
+
+  confirmButtons.classList.remove("hidden");  // unhide
+  confirmButtons.style.left = `${rect.left - gridRect.left - 20}px`;
+  confirmButtons.style.top  = `${rect.top - gridRect.top + 60}px`;
+  setTimeout(() => confirmButtons.classList.add("active"), 10);
+}
+
+
   
 
   
@@ -125,7 +125,6 @@ resetButton.addEventListener("click", () => {
     document.querySelectorAll(".tile").forEach(tile => {
       tile.classList.remove("house", "shop", "park", "hovering", "pending");
     });
-    steps = 1000;
     for (const b in buildingCounts) buildingCounts[b] = 0;
     updateStepCount();
     updateBuildingCounts();
@@ -200,7 +199,7 @@ for (let i = 0; i < gridSize * gridSize; i++) {
       }
     }
   
-    if (steps < selectedCost) {
+    if (stepTotal < selectedCost) {
       alert("Not enough steps to build!");
       return;
     }
@@ -251,7 +250,8 @@ confirmBuildBtn.addEventListener("click", (e) => {
       t.dataset.building = selectedBuilding;
     });
   
-    steps -= selectedCost;
+    stepTotal -= selectedCost;
+    localStorage.setItem("stepTotal", stepTotal);
     buildingCounts[selectedBuilding]++;
     updateStepCount();
     updateBuildingCounts();
@@ -310,7 +310,6 @@ return allTiles;
 }
 
 const userId = "someUniqueUserId"; // Must match app
-let stepTotal = parseInt(localStorage.getItem("stepTotal") || 0);
 let lastTimestamp = localStorage.getItem("lastStepTimestamp");
 
 document.getElementById("step-count").textContent = stepTotal;

@@ -3,13 +3,22 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Step City Builder</title>
+  <title>Terra Tread</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="icon" href="images/Terra-tread-logo-nbg-w (2).png" type="image/x-icon">
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-DCZ0C1B3EF"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-DCZ0C1B3EF');
+  </script>
 </head>
 <body>
   <header>
-    <h1>Step City Builder</h1>
+    <h1>Terra Tread</h1>
     <div id="step-count-container">
       Steps: <span id="step-count">1000</span>
     </div>
@@ -34,8 +43,9 @@
 
   <main>
     <div id="grid-wrapper">
-      <div id="grid"></div>
-      <div id="noise-overlay"></div>
+      <div id="grid">
+
+      </div>
     </div>
   </main>
 
