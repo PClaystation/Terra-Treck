@@ -2,27 +2,25 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Terra Tread</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="icon" href="images/Terra-tread-logo-nbg-w (2).png" type="image/x-icon">
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-DCZ0C1B3EF"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-
-    gtag('config', 'G-DCZ0C1B3EF');
-  </script>
 </head>
 <body>
   <header>
-    <h1>Terra Tread</h1>
-    <div id="step-count-container">
-      Steps: <span id="step-count">1000</span>
+    <div class="brand-block">
+      <h1>Terra Tread</h1>
+      <p id="player-status" aria-live="polite">Guest mode</p>
+      <p id="connection-status" aria-live="polite">Checking backend connection...</p>
     </div>
-    <button id="reset-button">Reset</button>
+    <div class="header-actions">
+      <div id="step-count-container">
+        Steps: <span id="step-count">0</span>
+      </div>
+      <button id="reset-button" type="button">Reset</button>
+      <button id="auth-button" type="button">Login</button>
+    </div>
   </header>
 
   <button id="build-toggle" class="circle-btn" aria-label="Toggle build mode">🔨</button>
@@ -43,34 +41,9 @@
 
   <main>
     <div id="grid-wrapper">
-      <div id="grid">
-
-      </div>
+      <div id="grid"></div>
     </div>
   </main>
-
-  <script type="module">
-    import Panzoom from 'https://cdn.skypack.dev/@panzoom/panzoom';
-  
-    const grid = document.getElementById('grid');
-    const wrapper = document.getElementById('grid-wrapper');
-  
-    const panzoom = Panzoom(grid, {
-      maxScale: 3,
-      minScale: 0.5,
-      contain: 'outside'
-    });
-  
-    wrapper.addEventListener('wheel', panzoom.zoomWithWheel);
-  </script>
-
-  <button onclick="window.location.href='login.html'">Login</button>
-
-
-
-  
-
-  
 
   <script src="script.js"></script>
 </body>
