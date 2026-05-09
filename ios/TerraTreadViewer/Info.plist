@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "https://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleDevelopmentRegion</key>
+  <string>$(DEVELOPMENT_LANGUAGE)</string>
+  <key>CFBundleDisplayName</key>
+  <string>Terra Tread</string>
+  <key>CFBundleExecutable</key>
+  <string>$(EXECUTABLE_NAME)</string>
+  <key>CFBundleIdentifier</key>
+  <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+  <key>CFBundleInfoDictionaryVersion</key>
+  <string>6.0</string>
+  <key>CFBundleName</key>
+  <string>$(PRODUCT_NAME)</string>
+  <key>CFBundlePackageType</key>
+  <string>APPL</string>
+  <key>CFBundleShortVersionString</key>
+  <string>$(MARKETING_VERSION)</string>
+  <key>CFBundleVersion</key>
+  <string>$(CURRENT_PROJECT_VERSION)</string>
+  <key>LSRequiresIPhoneOS</key>
+  <true/>
+  <key>MinimumOSVersion</key>
+  <string>$(IPHONEOS_DEPLOYMENT_TARGET)</string>
+  <key>NSAppTransportSecurity</key>
+  <dict>
+    <key>NSAllowsArbitraryLoadsInWebContent</key>
+    <true/>
+    <key>NSAllowsLocalNetworking</key>
+    <true/>
+  </dict>
+  <key>NSMotionUsageDescription</key>
+  <string>Terra Tread uses your daily step count to power the city builder.</string>
+  <key>NSMicrophoneUsageDescription</key>
+  <string>Terra Tread uses microphone access only when web content inside the app explicitly requests it.</string>
+  <key>TERRA_TREAD_ALLOW_WEB_AUTH</key>
+  <string>$(TERRA_TREAD_ALLOW_WEB_AUTH)</string>
+  <key>TERRA_TREAD_AUTH_API_BASE_URL</key>
+  <string>$(TERRA_TREAD_AUTH_API_BASE_URL)</string>
+  <key>TERRA_TREAD_GAME_API_BASE_URL</key>
+  <string>$(TERRA_TREAD_GAME_API_BASE_URL)</string>
+  <key>TERRA_TREAD_LOGIN_POPUP_URL</key>
+  <string>$(TERRA_TREAD_LOGIN_POPUP_URL)</string>
+  <key>TERRA_TREAD_WEB_URL</key>
+  <string>$(TERRA_TREAD_WEB_URL)</string>
+  <key>UIApplicationSupportsIndirectInputEvents</key>
+  <true/>
+  <key>UILaunchScreen</key>
+  <dict/>
+  <key>UIRequiresFullScreen</key>
+  <false/>
+  <key>UISupportedInterfaceOrientations</key>
+  <array>
+    <string>UIInterfaceOrientationPortrait</string>
+    <string>UIInterfaceOrientationLandscapeLeft</string>
+    <string>UIInterfaceOrientationLandscapeRight</string>
+  </array>
+  <key>UISupportedInterfaceOrientations~ipad</key>
+  <array>
+    <string>UIInterfaceOrientationPortrait</string>
+    <string>UIInterfaceOrientationPortraitUpsideDown</string>
+    <string>UIInterfaceOrientationLandscapeLeft</string>
+    <string>UIInterfaceOrientationLandscapeRight</string>
+  </array>
+</dict>
+</plist>

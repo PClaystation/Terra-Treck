@@ -1,0 +1,62 @@
+name: TerraTreadViewer
+options:
+  defaultConfig: Debug
+  deploymentTarget:
+    iOS: "17.0"
+configs:
+  Debug: debug
+  Release: release
+settings:
+  base:
+    PRODUCT_NAME: TerraTreadViewer
+    PRODUCT_BUNDLE_IDENTIFIER: com.terratread.viewer
+    MARKETING_VERSION: 1.0
+    CURRENT_PROJECT_VERSION: 1
+    SWIFT_VERSION: 6.0
+    DEVELOPMENT_TEAM: ""
+    TARGETED_DEVICE_FAMILY: "1,2"
+    SUPPORTS_MACCATALYST: NO
+    INFOPLIST_FILE: TerraTreadViewer/Info.plist
+    ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    CODE_SIGN_STYLE: Automatic
+    ENABLE_PREVIEWS: YES
+targets:
+  TerraTreadViewer:
+    type: application
+    platform: iOS
+    configFiles:
+      Debug: Configs/Debug.xcconfig
+      Release: Configs/Release.xcconfig
+    sources:
+      - path: TerraTreadViewer
+        excludes:
+          - Assets.xcassets
+      - path: TerraTreadViewer/Assets.xcassets
+        type: folder
+    resources:
+      - ../index.html
+      - ../login.html
+      - ../script.js
+      - ../style.css
+      - ../app
+      - ../images
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.terratread.viewer
+        INFOPLIST_KEY_CFBundleDisplayName: Terra Tread
+        INFOPLIST_KEY_UILaunchScreen: {}
+        INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
+        INFOPLIST_KEY_LSRequiresIPhoneOS: YES
+        INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoadsInWebContent: YES
+        INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsLocalNetworking: YES
+        INFOPLIST_KEY_NSMotionUsageDescription: Terra Tread uses your daily step count to power the city builder.
+        INFOPLIST_KEY_UIRequiresFullScreen: NO
+        INFOPLIST_KEY_UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight

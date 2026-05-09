@@ -1,8 +1,53 @@
-const GRID_SIZE = 20;
+import {
+  GRID_SIZE,
+  DEFAULT_STEPS,
+  CLOUD_STATE_SCHEMA_VERSION,
+  DEMOLISH_REFUND_RATIO,
+  STAT_DEFINITIONS,
+  BUILDINGS,
+  BUILDING_CLASS_NAMES,
+  CONTRACT_SLOT_LABELS,
+  CONTRACT_METRIC_LABELS,
+  safeText,
+  normalizeIsoTimestamp as normalizeBaseIsoTimestamp,
+  normalizeDayKey,
+  createInitialTrees as createBaseInitialTrees,
+  createDefaultState as createBaseState,
+  normalizeStatePayload as normalizeBaseStatePayload,
+  getSerializableState as getBaseSerializableState,
+  hasMeaningfulProgress as hasMeaningfulBaseProgress,
+  getTimestampValue as getBaseTimestampValue,
+  getNextBuildingSequence,
+  getBuildingEntries,
+  formatEffectList,
+  createEmptyCitySummary,
+  getBuildingMaxLevel,
+  getBuildingLevelMultiplier,
+  scaleEffectTotals,
+  getUpgradeCost,
+  getBuildingTotalInvestment,
+  computeCitySummary as computeBaseCitySummary,
+  refreshContractsState,
+  evaluateContract as evaluateBaseContract,
+  isBuildingUnlocked as isBaseBuildingUnlocked,
+  getBuildingIndexById as getBaseBuildingIndexById,
+  findBuildingById as findBaseBuildingById,
+  findBuildingAt as findBaseBuildingAt,
+  applyBuildAction,
+  applyMoveAction,
+  applyUpgradeAction,
+  applyDemolishAction,
+  applyResetAction,
+  claimContractRewardInState,
+  applyNativeStepSnapshotToState,
+  applyServerStepEntriesToState,
+  canPlaceBuilding,
+} from "./app/game-engine.mjs";
+
 const STORAGE_KEY = "terraTreckState";
 const POLL_INTERVAL_MS = 30000;
-const DEFAULT_STEPS = 1000;
 const REQUEST_TIMEOUT_MS = 10000;
+const CLOUD_SAVE_DEBOUNCE_MS = 1200;
 const AUTH_USER_STORAGE_KEY = "terraTreckAuthUser";
 const AUTH_API_BASE_STORAGE_KEY = "continental.authApiBaseUrl";
 const GAME_API_BASE_STORAGE_KEY = "terraTreck.gameApiBaseUrl";
@@ -34,13 +79,14 @@ const TRUSTED_LOGIN_ORIGINS = new Set([
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1"]);
 const IS_IOS_APP = String(APP_CONTEXT.platform || "").trim().toLowerCase() === "ios-app";
 const IOS_WEB_AUTH_ENABLED = IS_IOS_APP && APP_CONTEXT.allowsWebAuth === true;
+const IOS_APP_CONTENT_MODE =
+  safeText(APP_CONTEXT.contentMode).toLowerCase() || (IOS_WEB_AUTH_ENABLED ? "remote" : "bundled");
 const NATIVE_BRIDGE_HANDLER = "terraTread";
-
-const BUILDINGS = {
-  house: { width: 1, height: 1, cost: 100 },
-  shop: { width: 2, height: 1, cost: 200 },
-  park: { width: 2, height: 2, cost: 150 },
-};
+const STREAK_DAILY_GOAL = 4000;
+const STREAK_DAILY_REWARD = 150;
+const STREAK_MILESTONE_INTERVAL = 3;
+const STREAK_MILESTONE_REWARD = 250;
+const MAX_UNDO_ENTRIES = 25;
 
 const TREE_IMAGES = [
   "./images/Tree1-removebg-preview.png",
@@ -52,6 +98,7 @@ const grid = document.getElementById("grid");
 const stepCount = document.getElementById("step-count");
 const buildToggle = document.getElementById("build-toggle");
 const buildingOptions = document.getElementById("building-options");
+const undoButton = document.getElementById("undo-button");
 const resetButton = document.getElementById("reset-button");
 const confirmButtons = document.getElementById("confirm-buttons");
 const confirmBuildBtn = document.getElementById("confirm-build");
@@ -59,12 +106,38 @@ const cancelBuildBtn = document.getElementById("cancel-build");
 const authButton = document.getElementById("auth-button");
 const playerStatus = document.getElementById("player-status");
 const connectionStatus = document.getElementById("connection-status");
+const cloudStatus = document.getElementById("cloud-status");
+const cityLevel = document.getElementById("city-level");
+const cityProsperity = document.getElementById("city-prosperity");
+const cityProgressBar = document.getElementById("city-progress-bar");
+const nextUnlock = document.getElementById("next-unlock");
+const cityStats = document.getElementById("city-stats");
+const streakCount = document.getElementById("streak-count");
+const streakLabel = document.getElementById("streak-label");
+const streakSubtext = document.getElementById("streak-subtext");
+const dailyGoalBar = document.getElementById("daily-goal-bar");
+const dailyGoalProgress = document.getElementById("daily-goal-progress");
+const dailyGoalStatus = document.getElementById("daily-goal-status");
+const contractsSummary = document.getElementById("contracts-summary");
+const contractsList = document.getElementById("contracts-list");
+const buildingInspector = document.getElementById("building-inspector");
+const inspectorName = document.getElementById("inspector-name");
+const inspectorLevel = document.getElementById("inspector-level");
+const inspectorMeta = document.getElementById("inspector-meta");
+const inspectorEffects = document.getElementById("inspector-effects");
+const upgradeButton = document.getElementById("upgrade-button");
+const moveButton = document.getElementById("move-button");
+const demolishButton = document.getElementById("demolish-button");
+const boardStage = document.querySelector(".board-stage");
 
 let selectedBuilding = null;
+let selectedBuildingId = "";
+let relocationBuildingId = "";
 let buildMode = false;
 let previewLocked = false;
 let pendingTiles = [];
 let lockedPreviewTiles = [];
+let pendingAction = null;
 let syncTimerId = null;
 let syncInFlight = false;
 let authBusy = false;
@@ -79,6 +152,15 @@ let authApiValidated = false;
 let gameApiValidated = false;
 let authApiResolutionPromise = null;
 let gameApiResolutionPromise = null;
+let currentCitySummary = createEmptyCitySummary();
+let streakSummary = createEmptyStreakSummary();
+let cloudSaveTimerId = null;
+let cloudStateReady = false;
+let cloudStateUserId = "";
+let cloudSyncInFlight = false;
+let cloudSaveInFlight = false;
+let confirmButtonsHideTimerId = null;
+const undoStack = [];
 
 const state = loadState();
 
@@ -101,21 +183,14 @@ if (!IS_IOS_APP || IOS_WEB_AUTH_ENABLED) {
 
 function attachEventHandlers() {
   buildToggle.addEventListener("click", toggleBuildMode);
+  undoButton.addEventListener("click", undoLastAction);
   resetButton.addEventListener("click", resetCity);
   authButton.addEventListener("click", handleAuthButtonClick);
-
-  document.querySelectorAll(".building-btn").forEach((button) => {
-    button.addEventListener("click", () => {
-      if (!buildMode) {
-        return;
-      }
-
-      clearSelectedButtons();
-      button.classList.add("selected");
-      selectedBuilding = button.dataset.name;
-      hideConfirmButtons();
-    });
-  });
+  buildingOptions.addEventListener("click", handleBuildingOptionClick);
+  contractsList.addEventListener("click", handleContractClick);
+  upgradeButton.addEventListener("click", handleUpgradeButtonClick);
+  moveButton.addEventListener("click", handleMoveButtonClick);
+  demolishButton.addEventListener("click", handleDemolishButtonClick);
 
   confirmBuildBtn.addEventListener("click", (event) => {
     event.stopPropagation();
@@ -128,63 +203,193 @@ function attachEventHandlers() {
   });
 }
 
+function handleBuildingOptionClick(event) {
+  const button = event.target.closest(".building-btn");
+  if (!button || !buildingOptions.contains(button) || previewLocked) {
+    return;
+  }
+
+  const buildingName = safeText(button.dataset.name);
+  if (!isBuildingUnlocked(buildingName)) {
+    return;
+  }
+
+  buildMode = true;
+  selectedBuilding = buildingName;
+  selectedBuildingId = "";
+  relocationBuildingId = "";
+  hideConfirmButtons();
+  renderAll();
+  focusBoardForMobilePlacement();
+}
+
+function handleContractClick(event) {
+  const button = event.target.closest(".contract-claim-btn");
+  if (!button || !contractsList.contains(button)) {
+    return;
+  }
+
+  const slot = safeText(button.dataset.slot);
+  claimContractReward(slot);
+}
+
+function handleUpgradeButtonClick() {
+  const building = findBuildingById(selectedBuildingId);
+  if (!building) {
+    return;
+  }
+
+  const upgradeCost = getUpgradeCost(building);
+  if (!upgradeCost) {
+    return;
+  }
+
+  if (state.availableSteps < upgradeCost) {
+    window.alert("Not enough steps to upgrade this building.");
+    return;
+  }
+
+  recordUndoSnapshot();
+  const upgrade = applyUpgradeAction(state, building.id);
+  if (!upgrade.ok) {
+    return;
+  }
+
+  persistState();
+  renderAll();
+}
+
+function handleMoveButtonClick() {
+  const building = findBuildingById(selectedBuildingId);
+  if (!building) {
+    return;
+  }
+
+  if (relocationBuildingId === building.id) {
+    relocationBuildingId = "";
+    pendingAction = null;
+    previewLocked = false;
+    pendingTiles = [];
+    lockedPreviewTiles = [];
+    clearHoverPreview();
+    hideConfirmButtons();
+    renderAll();
+    return;
+  }
+
+  relocationBuildingId = building.id;
+  selectedBuilding = null;
+  buildMode = false;
+  clearHoverPreview();
+  hideConfirmButtons();
+  renderAll();
+}
+
+function handleDemolishButtonClick() {
+  const building = findBuildingById(selectedBuildingId);
+  if (!building) {
+    return;
+  }
+
+  const refundSteps = Math.max(
+    0,
+    Math.round(getBuildingTotalInvestment(building) * DEMOLISH_REFUND_RATIO)
+  );
+
+  if (
+    !window.confirm(
+      `Demolish this ${BUILDINGS[building.type].label.toLowerCase()} for ${refundSteps} refunded steps?`
+    )
+  ) {
+    return;
+  }
+
+  recordUndoSnapshot();
+  const demolition = applyDemolishAction(state, building.id);
+  if (!demolition.ok) {
+    return;
+  }
+
+  selectedBuildingId = "";
+  relocationBuildingId = "";
+  persistState();
+  renderAll();
+}
+
 function loadState() {
   const savedState = localStorage.getItem(STORAGE_KEY);
   const legacySteps = parseInt(localStorage.getItem("stepTotal") || "", 10);
   const legacyTimestamp = localStorage.getItem("lastStepTimestamp");
 
-  const fallbackState = {
+  const fallbackState = createDefaultState({
     availableSteps: Number.isFinite(legacySteps) ? legacySteps : DEFAULT_STEPS,
     lastStepTimestamp: legacyTimestamp || null,
-    lastNativeStepDate: null,
-    lastNativeStepTotal: 0,
-    lastUploadedNativeUserId: null,
-    lastUploadedNativeDayKey: null,
-    lastUploadedNativeStepTotal: 0,
-    buildings: [],
-    trees: createInitialTrees(),
-  };
+  });
 
   if (!savedState) {
-    persistState(fallbackState);
+    persistState(fallbackState, { touch: false, skipCloud: true });
     return fallbackState;
   }
 
   try {
-    const parsed = JSON.parse(savedState);
-    return {
-      availableSteps: Number.isFinite(parsed.availableSteps)
-        ? parsed.availableSteps
-        : fallbackState.availableSteps,
-      lastStepTimestamp:
-        typeof parsed.lastStepTimestamp === "string" ? parsed.lastStepTimestamp : null,
-      lastNativeStepDate:
-        typeof parsed.lastNativeStepDate === "string" ? parsed.lastNativeStepDate : null,
-      lastNativeStepTotal: Number.isFinite(parsed.lastNativeStepTotal)
-        ? parsed.lastNativeStepTotal
-        : 0,
-      lastUploadedNativeUserId:
-        typeof parsed.lastUploadedNativeUserId === "string"
-          ? parsed.lastUploadedNativeUserId
-          : null,
-      lastUploadedNativeDayKey:
-        typeof parsed.lastUploadedNativeDayKey === "string"
-          ? parsed.lastUploadedNativeDayKey
-          : null,
-      lastUploadedNativeStepTotal: Number.isFinite(parsed.lastUploadedNativeStepTotal)
-        ? parsed.lastUploadedNativeStepTotal
-        : 0,
-      buildings: Array.isArray(parsed.buildings) ? parsed.buildings : [],
-      trees: Array.isArray(parsed.trees) && parsed.trees.length ? parsed.trees : fallbackState.trees,
-    };
+    return normalizeStatePayload(JSON.parse(savedState), fallbackState);
   } catch (error) {
     console.error("Failed to parse saved state:", error);
-    persistState(fallbackState);
+    persistState(fallbackState, { touch: false, skipCloud: true });
     return fallbackState;
   }
 }
 
-function persistState(nextState = state) {
+function createInitialTrees() {
+  return createBaseInitialTrees({ imageCount: TREE_IMAGES.length });
+}
+
+function createDefaultState(overrides = {}) {
+  return createBaseState(overrides, { treeFactory: createInitialTrees });
+}
+
+function normalizeStatePayload(source = {}, fallbackState = createDefaultState()) {
+  return normalizeBaseStatePayload(source, fallbackState, {
+    treeVariantCount: TREE_IMAGES.length,
+  });
+}
+
+function getSerializableState(source = state) {
+  return getBaseSerializableState(source, {
+    treeFactory: createInitialTrees,
+    treeVariantCount: TREE_IMAGES.length,
+  });
+}
+
+function replaceState(nextState, { touch = false, skipCloud = true } = {}) {
+  const normalizedState = normalizeStatePayload(nextState, createDefaultState());
+  Object.keys(state).forEach((key) => {
+    delete state[key];
+  });
+  Object.assign(state, normalizedState);
+  persistState(state, { touch, skipCloud });
+}
+
+function hasMeaningfulProgress(source = state) {
+  return hasMeaningfulBaseProgress(source);
+}
+
+function getTimestampValue(value) {
+  return getBaseTimestampValue(value);
+}
+
+function persistState(nextState = state, { touch = true, skipCloud = false } = {}) {
+  nextState.schemaVersion = CLOUD_STATE_SCHEMA_VERSION;
+  nextState.nextBuildingId = Math.max(
+    Number.isFinite(nextState.nextBuildingId) ? Math.floor(nextState.nextBuildingId) : 1,
+    getNextBuildingSequence(nextState.buildings)
+  );
+  if (touch) {
+    nextState.updatedAt = new Date().toISOString();
+  } else if (nextState.updatedAt) {
+    nextState.updatedAt = normalizeBaseIsoTimestamp(nextState.updatedAt);
+  }
+
   localStorage.setItem(STORAGE_KEY, JSON.stringify(nextState));
   localStorage.setItem("stepTotal", String(nextState.availableSteps));
 
@@ -193,14 +398,465 @@ function persistState(nextState = state) {
   } else {
     localStorage.removeItem("lastStepTimestamp");
   }
-}
 
-function safeText(value) {
-  return String(value || "").trim();
+  if (!skipCloud) {
+    scheduleCloudSave();
+  }
 }
 
 function trimTrailingSlash(value) {
   return safeText(value).replace(/\/+$/, "");
+}
+
+function createEmptyStreakSummary() {
+  return {
+    dailyGoal: {
+      dayKey: "",
+      targetSteps: STREAK_DAILY_GOAL,
+      currentSteps: 0,
+      remainingSteps: STREAK_DAILY_GOAL,
+      completed: false,
+      rewardSteps: STREAK_DAILY_REWARD,
+      rewardClaimed: false,
+    },
+    streak: {
+      current: 0,
+      longest: 0,
+      milestoneInterval: STREAK_MILESTONE_INTERVAL,
+      nextMilestone: STREAK_MILESTONE_INTERVAL,
+    },
+    rewards: {
+      claimable: [],
+      dailyGoalRewardSteps: STREAK_DAILY_REWARD,
+      streakMilestoneRewardSteps: STREAK_MILESTONE_REWARD,
+    },
+    recentDailyTotals: [],
+  };
+}
+
+function normalizeRewardList(source) {
+  if (!Array.isArray(source)) {
+    return [];
+  }
+
+  return source
+    .map((reward) => {
+      const type = safeText(reward?.type);
+      const dayKey = normalizeDayKey(reward?.dayKey);
+      const steps = Number.isFinite(reward?.steps) ? Math.max(0, Math.floor(reward.steps)) : 0;
+
+      if (!type || !dayKey || steps <= 0) {
+        return null;
+      }
+
+      return {
+        type,
+        dayKey,
+        steps,
+        streakLength: Number.isFinite(reward?.streakLength)
+          ? Math.max(0, Math.floor(reward.streakLength))
+          : 0,
+        label: safeText(reward?.label),
+      };
+    })
+    .filter(Boolean);
+}
+
+function normalizeStreakSummary(source = {}) {
+  return {
+    dailyGoal: {
+      dayKey: normalizeDayKey(source?.dailyGoal?.dayKey) || "",
+      targetSteps: Number.isFinite(source?.dailyGoal?.targetSteps)
+        ? Math.max(0, Math.floor(source.dailyGoal.targetSteps))
+        : STREAK_DAILY_GOAL,
+      currentSteps: Number.isFinite(source?.dailyGoal?.currentSteps)
+        ? Math.max(0, Math.floor(source.dailyGoal.currentSteps))
+        : 0,
+      remainingSteps: Number.isFinite(source?.dailyGoal?.remainingSteps)
+        ? Math.max(0, Math.floor(source.dailyGoal.remainingSteps))
+        : STREAK_DAILY_GOAL,
+      completed: source?.dailyGoal?.completed === true,
+      rewardSteps: Number.isFinite(source?.dailyGoal?.rewardSteps)
+        ? Math.max(0, Math.floor(source.dailyGoal.rewardSteps))
+        : STREAK_DAILY_REWARD,
+      rewardClaimed: source?.dailyGoal?.rewardClaimed === true,
+    },
+    streak: {
+      current: Number.isFinite(source?.streak?.current)
+        ? Math.max(0, Math.floor(source.streak.current))
+        : 0,
+      longest: Number.isFinite(source?.streak?.longest)
+        ? Math.max(0, Math.floor(source.streak.longest))
+        : 0,
+      milestoneInterval: Number.isFinite(source?.streak?.milestoneInterval)
+        ? Math.max(1, Math.floor(source.streak.milestoneInterval))
+        : STREAK_MILESTONE_INTERVAL,
+      nextMilestone: Number.isFinite(source?.streak?.nextMilestone)
+        ? Math.max(1, Math.floor(source.streak.nextMilestone))
+        : STREAK_MILESTONE_INTERVAL,
+    },
+    rewards: {
+      claimable: normalizeRewardList(source?.rewards?.claimable),
+      dailyGoalRewardSteps: Number.isFinite(source?.rewards?.dailyGoalRewardSteps)
+        ? Math.max(0, Math.floor(source.rewards.dailyGoalRewardSteps))
+        : STREAK_DAILY_REWARD,
+      streakMilestoneRewardSteps: Number.isFinite(source?.rewards?.streakMilestoneRewardSteps)
+        ? Math.max(0, Math.floor(source.rewards.streakMilestoneRewardSteps))
+        : STREAK_MILESTONE_REWARD,
+    },
+    recentDailyTotals: Array.isArray(source?.recentDailyTotals) ? source.recentDailyTotals : [],
+  };
+}
+
+function setStreakSummary(summary = {}) {
+  streakSummary = normalizeStreakSummary(summary);
+  renderStreakOverview(streakSummary);
+}
+
+function computeCitySummary(buildings = state.buildings) {
+  return computeBaseCitySummary(buildings);
+}
+
+function ensureContractsAreCurrent({ persist = true } = {}) {
+  const { contracts, changed } = refreshContractsState(state, computeCitySummary());
+  state.contracts = contracts;
+
+  if (changed && persist) {
+    persistState();
+  }
+
+  return changed;
+}
+
+function evaluateContract(contract, summary = currentCitySummary) {
+  return evaluateBaseContract(contract, state, summary);
+}
+
+function isBuildingUnlocked(name, level = currentCitySummary.level) {
+  return isBaseBuildingUnlocked(name, level);
+}
+
+function getBuildingIndexById(buildingId, buildings = state.buildings) {
+  return getBaseBuildingIndexById(buildingId, buildings);
+}
+
+function findBuildingById(buildingId, buildings = state.buildings) {
+  return findBaseBuildingById(buildingId, buildings);
+}
+
+function findBuildingAt(row, col, buildings = state.buildings) {
+  return findBaseBuildingAt(row, col, buildings);
+}
+
+function renderCityStats(summary = currentCitySummary) {
+  if (!cityStats) {
+    return;
+  }
+
+  cityStats.innerHTML = Object.entries(STAT_DEFINITIONS)
+    .map(([stat, definition]) => {
+      const value = Number(summary.stats?.[stat]) || 0;
+      return `
+        <div class="stat-chip">
+          <span class="stat-chip-emblem" aria-hidden="true">${definition.icon}</span>
+          <span class="stat-chip-copy">
+            <span class="stat-chip-label">${definition.label}</span>
+            <span class="stat-chip-value">${value}</span>
+          </span>
+        </div>
+      `;
+    })
+    .join("");
+}
+
+function renderCityOverview(summary = currentCitySummary) {
+  if (!cityLevel || !cityProsperity || !cityProgressBar || !nextUnlock) {
+    return;
+  }
+
+  cityLevel.textContent = String(summary.level);
+  cityProsperity.textContent = summary.nextLevelThreshold
+    ? `${summary.prosperity} / ${summary.nextLevelThreshold} prosperity`
+    : `${summary.prosperity} prosperity`;
+  cityProgressBar.style.width = `${summary.progressPercent}%`;
+
+  const synergyText = summary.prosperityBonus
+    ? ` • Synergy bonus +${summary.prosperityBonus}`
+    : "";
+
+  if (summary.nextUnlock) {
+    const [, definition] = summary.nextUnlock;
+    nextUnlock.textContent = `Next unlock: ${definition.label} at level ${definition.unlockLevel}${synergyText}`;
+  } else {
+    nextUnlock.textContent = summary.buildingCount
+      ? `All buildings unlocked${synergyText}`
+      : "Build your first district to start growing the city.";
+  }
+
+  renderCityStats(summary);
+}
+
+function renderStreakOverview(summary = streakSummary) {
+  if (
+    !streakCount ||
+    !streakLabel ||
+    !streakSubtext ||
+    !dailyGoalBar ||
+    !dailyGoalProgress ||
+    !dailyGoalStatus
+  ) {
+    return;
+  }
+
+  const normalizedSummary = normalizeStreakSummary(summary);
+  const { userId } = getSession();
+  const current = normalizedSummary.streak.current;
+  const longest = normalizedSummary.streak.longest;
+  const targetSteps = normalizedSummary.dailyGoal.targetSteps || STREAK_DAILY_GOAL;
+  const currentSteps = normalizedSummary.dailyGoal.currentSteps;
+  const claimableRewards = normalizedSummary.rewards.claimable;
+  const progressPercent = Math.max(0, Math.min(100, (currentSteps / targetSteps) * 100));
+
+  streakCount.textContent = String(current);
+  streakLabel.textContent =
+    current === 1 ? "Current streak" : current > 1 ? "Current streak" : "Days in a row";
+  streakSubtext.textContent = userId
+    ? longest > 0
+      ? `Best run ${longest} days. Next streak bonus at ${normalizedSummary.streak.nextMilestone} days.`
+      : "Walk 4,000 steps to start your first streak."
+    : "Login to sync streaks and cloud saves across devices.";
+  dailyGoalBar.style.width = `${progressPercent}%`;
+  dailyGoalProgress.textContent = `${currentSteps.toLocaleString()} / ${targetSteps.toLocaleString()} steps today`;
+
+  if (!userId) {
+    dailyGoalStatus.textContent = `Reach ${targetSteps.toLocaleString()} steps for a ${normalizedSummary.dailyGoal.rewardSteps}-step daily bonus.`;
+    return;
+  }
+
+  const todayGoalReward =
+    claimableRewards.find(
+      (reward) =>
+        reward.type === "daily-goal" && reward.dayKey === normalizedSummary.dailyGoal.dayKey
+    ) || claimableRewards.find((reward) => reward.type === "daily-goal");
+  const milestoneReward = claimableRewards.find((reward) => reward.type === "streak-milestone");
+
+  if (todayGoalReward) {
+    dailyGoalStatus.textContent = `Daily bonus ready: +${todayGoalReward.steps} steps.`;
+  } else if (milestoneReward) {
+    dailyGoalStatus.textContent = `${milestoneReward.streakLength}-day streak bonus unlocked: +${milestoneReward.steps} steps.`;
+  } else if (normalizedSummary.dailyGoal.completed && normalizedSummary.dailyGoal.rewardClaimed) {
+    dailyGoalStatus.textContent = "Today's bonus claimed. Keep the streak alive tomorrow.";
+  } else if (normalizedSummary.dailyGoal.completed) {
+    dailyGoalStatus.textContent = "Goal reached. Processing your reward...";
+  } else {
+    dailyGoalStatus.textContent = `Need ${normalizedSummary.dailyGoal.remainingSteps.toLocaleString()} more steps for +${normalizedSummary.dailyGoal.rewardSteps}.`;
+  }
+}
+
+function getBuildingSummaryEntry(buildingId, summary = currentCitySummary) {
+  return summary.breakdown.find((entry) => entry.id === safeText(buildingId)) || null;
+}
+
+function updateUndoButton() {
+  if (!undoButton) {
+    return;
+  }
+
+  undoButton.disabled = !undoStack.length || previewLocked;
+}
+
+function renderContracts(summary = currentCitySummary) {
+  if (!contractsList || !contractsSummary) {
+    return;
+  }
+
+  const evaluations = ["daily", "weekly"].map((slot) =>
+    evaluateContract(state.contracts?.[slot], summary)
+  );
+  const claimableCount = evaluations.filter(
+    ({ completed, contract }) => completed && !contract.claimed
+  ).length;
+
+  contractsSummary.textContent = claimableCount
+    ? `${claimableCount} reward${claimableCount === 1 ? "" : "s"} ready to claim.`
+    : "Daily and weekly goals refresh automatically.";
+
+  contractsList.innerHTML = evaluations
+    .map(({ contract, progressValue, targetDelta, progressPercent, completed, remaining }) => {
+      const metricLabel = CONTRACT_METRIC_LABELS[contract.metricKey] || "progress";
+      const buttonLabel = contract.claimed
+        ? "Claimed"
+        : completed
+          ? `Claim +${contract.rewardSteps}`
+          : "In progress";
+      const statusText = contract.claimed
+        ? "Reward claimed."
+        : completed
+          ? "Objective complete."
+          : `${remaining} ${metricLabel} remaining.`;
+
+      return `
+        <article class="contract-item${completed ? " contract-item-complete" : ""}${contract.claimed ? " contract-item-claimed" : ""}">
+          <div class="contract-row">
+            <strong>${contract.title}</strong>
+            <span class="contract-badge">${CONTRACT_SLOT_LABELS[contract.slot] || "Contract"}</span>
+          </div>
+          <p class="contract-copy">${contract.description}</p>
+          <div class="contract-track" aria-hidden="true">
+            <div class="contract-bar" style="width:${progressPercent}%"></div>
+          </div>
+          <div class="contract-row contract-meta-row">
+            <span>${Math.min(progressValue, targetDelta)} / ${targetDelta} ${metricLabel}</span>
+            <span>${contract.rewardSteps} steps</span>
+          </div>
+          <div class="contract-row contract-meta-row">
+            <span class="contract-status">${statusText}</span>
+            <button
+              type="button"
+              class="contract-claim-btn"
+              data-slot="${contract.slot}"
+              ${completed && !contract.claimed ? "" : "disabled"}
+            >
+              ${buttonLabel}
+            </button>
+          </div>
+        </article>
+      `;
+    })
+    .join("");
+}
+
+function renderBuildingInspector(summary = currentCitySummary) {
+  if (
+    !buildingInspector ||
+    !inspectorName ||
+    !inspectorLevel ||
+    !inspectorMeta ||
+    !inspectorEffects ||
+    !upgradeButton ||
+    !moveButton ||
+    !demolishButton
+  ) {
+    return;
+  }
+
+  if (buildMode && selectedBuilding) {
+    buildingInspector.dataset.buildingType = selectedBuilding;
+    inspectorName.textContent = `${BUILDINGS[selectedBuilding].label} selected`;
+    inspectorLevel.textContent = "Placement";
+    inspectorMeta.textContent = "Tap an open plot on the city board to preview this district.";
+    inspectorEffects.textContent = `${formatEffectList(BUILDINGS[selectedBuilding].baseEffects)} • ${BUILDINGS[selectedBuilding].synergies
+      .map((rule) => rule.label)
+      .join(" • ")}`;
+    upgradeButton.disabled = true;
+    moveButton.disabled = true;
+    demolishButton.disabled = true;
+    upgradeButton.textContent = "Upgrade";
+    moveButton.textContent = "Move";
+    demolishButton.textContent = "Demolish";
+    buildingInspector.classList.remove("hidden");
+    return;
+  }
+
+  const building = findBuildingById(selectedBuildingId);
+  if (!building) {
+    delete buildingInspector.dataset.buildingType;
+    upgradeButton.disabled = true;
+    moveButton.disabled = true;
+    demolishButton.disabled = true;
+    inspectorName.textContent = "No district selected";
+    inspectorLevel.textContent = "Inspect";
+    inspectorMeta.textContent = "Tap a placed building to inspect it, or choose a district from the build palette.";
+    inspectorEffects.textContent = "Upgrade, relocation, and demolition controls will appear here for the active plot.";
+    upgradeButton.textContent = "Upgrade";
+    moveButton.textContent = "Move";
+    demolishButton.textContent = "Demolish";
+    buildingInspector.classList.remove("hidden");
+    return;
+  }
+
+  const definition = BUILDINGS[building.type];
+  const summaryEntry = getBuildingSummaryEntry(building.id, summary);
+  const upgradeCost = getUpgradeCost(building);
+  const refundSteps = Math.max(0, Math.round(getBuildingTotalInvestment(building) * DEMOLISH_REFUND_RATIO));
+  const moveModeActive = relocationBuildingId === building.id;
+  const maxLevel = getBuildingMaxLevel(building.type);
+  const synergyCount = summaryEntry?.synergyDetails?.length || 0;
+
+  buildingInspector.dataset.buildingType = building.type;
+  inspectorName.textContent = definition.label;
+  inspectorLevel.textContent = `Lv ${building.level}/${maxLevel}`;
+  inspectorMeta.textContent = moveModeActive
+    ? "Move mode active. Tap a free destination, then confirm or cancel."
+    : `Plot ${building.row + 1}, ${building.col + 1} • ${definition.width}x${definition.height} footprint • Refund ${refundSteps} steps`;
+  inspectorEffects.textContent = `${formatEffectList(summaryEntry?.totalEffects || scaleEffectTotals(definition.baseEffects, getBuildingLevelMultiplier(building.level)))}${
+    synergyCount ? ` • ${synergyCount} active synergy${synergyCount === 1 ? "" : "ies"}` : ""
+  }`;
+
+  upgradeButton.textContent = upgradeCost
+    ? `Upgrade (${upgradeCost})`
+    : "Max level";
+  moveButton.textContent = moveModeActive ? "Relocating..." : "Move";
+  demolishButton.textContent = `Demolish (+${refundSteps})`;
+  upgradeButton.disabled = Boolean(
+    previewLocked || moveModeActive || !upgradeCost || state.availableSteps < upgradeCost
+  );
+  moveButton.disabled = previewLocked && !moveModeActive;
+  demolishButton.disabled = previewLocked;
+  buildingInspector.classList.remove("hidden");
+}
+
+function renderBuildingOptions() {
+  if (!buildingOptions) {
+    return;
+  }
+
+  if (selectedBuilding && !isBuildingUnlocked(selectedBuilding)) {
+    selectedBuilding = null;
+  }
+
+  buildingOptions.innerHTML = getBuildingEntries()
+    .map(([name, definition]) => {
+      const unlocked = isBuildingUnlocked(name);
+      const affordable = state.availableSteps >= definition.cost;
+      const selected = selectedBuilding === name;
+      const synergySummary = definition.synergies.map((rule) => rule.label).join(" • ");
+      const statusText = !unlocked
+        ? `Unlocks at City Level ${definition.unlockLevel}`
+        : selected && buildMode
+          ? "Selected • Tap a tile to place"
+          : affordable
+            ? "Available now"
+            : `Need ${definition.cost - state.availableSteps} more steps`;
+      const titleText = `${definition.label}: ${formatEffectList(
+        definition.baseEffects
+      )}. Synergy: ${definition.synergies.map((rule) => rule.label).join("; ")}.`;
+
+      return `
+        <button
+          type="button"
+          class="building-btn${selected ? " selected" : ""}${unlocked ? "" : " locked"}${affordable ? "" : " unaffordable"}"
+          data-name="${name}"
+          ${unlocked ? "" : 'disabled aria-disabled="true"'}
+          title="${titleText}"
+        >
+          <span class="building-icon" aria-hidden="true">${definition.icon}</span>
+          <span class="building-copy">
+            <span class="building-title-row">
+              <span class="building-name">${definition.label}</span>
+              <span class="building-badge">Lv ${definition.unlockLevel}</span>
+            </span>
+            <span class="building-meta-row">
+              <span class="building-cost">${definition.cost} steps</span>
+              <span class="building-effects">${formatEffectList(definition.baseEffects, { short: true })}</span>
+            </span>
+            <span class="building-synergy">${synergySummary}</span>
+            <span class="building-status">${statusText}</span>
+          </span>
+        </button>
+      `;
+    })
+    .join("");
 }
 
 function readStoredAuthUser() {
@@ -294,7 +950,16 @@ function initializeEmbeddedApp() {
   });
   syncSessionUI();
   requestNativeSteps();
-  setConnectionStatus(IOS_WEB_AUTH_ENABLED ? "Hosted app mode" : "Bundled app mode", "online");
+  setConnectionStatus(
+    IOS_APP_CONTENT_MODE === "remote" ? "Hosted app mode" : "Bundled app mode",
+    "online"
+  );
+  setCloudStatus(
+    IOS_WEB_AUTH_ENABLED
+      ? "Login to enable cloud saves and streak sync."
+      : "Cloud saves require web login in the iPhone app.",
+    "muted"
+  );
 }
 
 function clearLegacyPlaceholderSession() {
@@ -332,6 +997,14 @@ function clearAuthState() {
   accessToken = "";
   cacheCurrentUser(null);
   authBusy = false;
+  cloudStateReady = false;
+  cloudStateUserId = "";
+  if (cloudSaveTimerId) {
+    window.clearTimeout(cloudSaveTimerId);
+    cloudSaveTimerId = null;
+  }
+  setStreakSummary(createEmptyStreakSummary());
+  setCloudStatus("Cloud saves are available after login.", "muted");
   stopStepSync();
   syncSessionUI();
 }
@@ -343,6 +1016,15 @@ function setConnectionStatus(text, tone = "muted") {
 
   connectionStatus.textContent = text;
   connectionStatus.dataset.tone = tone;
+}
+
+function setCloudStatus(text, tone = "muted") {
+  if (!cloudStatus) {
+    return;
+  }
+
+  cloudStatus.textContent = text;
+  cloudStatus.dataset.tone = tone;
 }
 
 function postMessageToNative(type, payload = {}) {
@@ -370,21 +1052,10 @@ function requestNativeSteps() {
 }
 
 function applyNativeStepSync(payload = {}) {
-  const normalizedSteps = Math.max(0, Math.floor(Number(payload.todaySteps) || 0));
-  const dayKey = safeText(payload.dayKey) || new Date().toISOString().slice(0, 10);
-  const lastDayKey = safeText(state.lastNativeStepDate);
-  const lastTotal = Number.isFinite(state.lastNativeStepTotal) ? state.lastNativeStepTotal : 0;
-
-  if (lastDayKey !== dayKey) {
-    state.availableSteps += normalizedSteps;
-  } else if (normalizedSteps > lastTotal) {
-    state.availableSteps += normalizedSteps - lastTotal;
-  }
-
-  state.lastNativeStepDate = dayKey;
-  state.lastNativeStepTotal = normalizedSteps;
+  applyNativeStepSnapshotToState(state, payload);
   persistState();
   updateStepCount();
+  renderBuildingOptions();
   syncSessionUI();
   void syncPendingNativeSteps();
 }
@@ -906,8 +1577,12 @@ async function restoreAuthSession() {
     }
 
     await loadCurrentUser();
+    await syncCloudStateForCurrentUser();
     startStepSync();
     void syncPendingNativeSteps();
+    if (IS_IOS_APP) {
+      void fetchStepsFromServer({ applyEntryGrants: false });
+    }
   } catch (error) {
     console.error("Failed to restore Continental ID session:", error);
     clearAuthState();
@@ -935,8 +1610,12 @@ async function handleLoginMessage(event) {
       accessTokenHint: safeText(event.data?.accessToken || event.data?.token),
     });
     closeLoginPopup();
+    await syncCloudStateForCurrentUser();
     startStepSync();
     void syncPendingNativeSteps();
+    if (IS_IOS_APP) {
+      void fetchStepsFromServer({ applyEntryGrants: false });
+    }
   } catch (error) {
     console.error("Continental ID sign-in completed, but Terra-Treck could not restore the session:", error);
     clearAuthState();
@@ -945,24 +1624,6 @@ async function handleLoginMessage(event) {
     authBusy = false;
     syncSessionUI();
   }
-}
-
-function createInitialTrees() {
-  const trees = [];
-
-  for (let row = 0; row < GRID_SIZE; row += 1) {
-    for (let col = 0; col < GRID_SIZE; col += 1) {
-      if (Math.random() < 0.1) {
-        trees.push({
-          row,
-          col,
-          imageIndex: Math.floor(Math.random() * TREE_IMAGES.length),
-        });
-      }
-    }
-  }
-
-  return trees;
 }
 
 function initializeGrid() {
@@ -994,17 +1655,44 @@ function createTileColor(row, col) {
 }
 
 function renderAll() {
+  const contractsChanged = ensureContractsAreCurrent({ persist: false });
+  if (selectedBuildingId && getBuildingIndexById(selectedBuildingId) < 0) {
+    selectedBuildingId = "";
+  }
+  if (relocationBuildingId && getBuildingIndexById(relocationBuildingId) < 0) {
+    relocationBuildingId = "";
+  }
+  currentCitySummary = computeCitySummary();
   clearGridDecorations();
   renderTrees();
   renderBuildings();
+  renderCityOverview();
+  renderStreakOverview();
+  renderContracts();
+  renderBuildingOptions();
+  renderBuildingInspector();
   updateStepCount();
+  updateUndoButton();
   updateBuildModeVisuals();
+
+  if (contractsChanged) {
+    persistState();
+  }
 }
 
 function clearGridDecorations() {
   Array.from(grid.children).forEach((tile) => {
-    tile.classList.remove("house", "shop", "park", "hovering", "pending");
+    tile.classList.remove(
+      ...BUILDING_CLASS_NAMES,
+      "hovering",
+      "pending",
+      "selected-building",
+      "moving-origin"
+    );
     tile.dataset.building = "";
+    tile.dataset.buildingId = "";
+    tile.dataset.buildingLevel = "";
+    tile.dataset.buildingAnchor = "";
 
     const tree = tile.querySelector("img");
     if (tree) {
@@ -1044,12 +1732,63 @@ function renderBuildings() {
 
       tile.classList.add(building.type);
       tile.dataset.building = building.type;
+      tile.dataset.buildingId = building.id;
+      tile.dataset.buildingLevel = String(building.level);
+      tile.classList.toggle("selected-building", building.id === selectedBuildingId);
+      tile.classList.toggle("moving-origin", building.id === relocationBuildingId);
     });
+
+    const anchorTile = getTileAt(building.row, building.col);
+    if (anchorTile) {
+      anchorTile.dataset.buildingAnchor = "true";
+      anchorTile.dataset.buildingLevel = String(building.level);
+    }
   });
 }
 
 function updateStepCount() {
-  stepCount.textContent = String(state.availableSteps);
+  stepCount.textContent = Number(state.availableSteps).toLocaleString();
+}
+
+function createStateSnapshot(source = state) {
+  return JSON.parse(JSON.stringify(getSerializableState(source)));
+}
+
+function recordUndoSnapshot() {
+  undoStack.push(createStateSnapshot());
+  if (undoStack.length > MAX_UNDO_ENTRIES) {
+    undoStack.shift();
+  }
+  updateUndoButton();
+}
+
+function undoLastAction() {
+  if (!undoStack.length || previewLocked) {
+    return;
+  }
+
+  const previousState = undoStack.pop();
+  selectedBuilding = null;
+  selectedBuildingId = "";
+  relocationBuildingId = "";
+  previewLocked = false;
+  pendingAction = null;
+  pendingTiles = [];
+  lockedPreviewTiles = [];
+  clearHoverPreview();
+  hideConfirmButtons();
+  replaceState(previousState);
+  renderAll();
+}
+
+function claimContractReward(slot) {
+  const claim = claimContractRewardInState(state, slot, currentCitySummary);
+  if (!claim.ok) {
+    return;
+  }
+
+  persistState();
+  renderAll();
 }
 
 function toggleBuildMode() {
@@ -1063,9 +1802,11 @@ function toggleBuildMode() {
 function enterBuildMode() {
   buildMode = true;
   selectedBuilding = null;
+  selectedBuildingId = "";
+  relocationBuildingId = "";
   clearSelectedButtons();
-  updateBuildModeVisuals();
   hideConfirmButtons();
+  renderAll();
 }
 
 function exitBuildMode() {
@@ -1073,15 +1814,19 @@ function exitBuildMode() {
   selectedBuilding = null;
   previewLocked = false;
   lockedPreviewTiles = [];
+  pendingAction = null;
   clearSelectedButtons();
   clearHoverPreview();
   hideConfirmButtons();
-  updateBuildModeVisuals();
+  renderAll();
 }
 
 function updateBuildModeVisuals() {
   buildToggle.classList.toggle("build-mode-active", buildMode);
-  buildingOptions.classList.toggle("hidden", !buildMode);
+  buildToggle.textContent = buildMode ? "Exit Build Mode" : "Enter Build Mode";
+  buildToggle.setAttribute("aria-pressed", buildMode ? "true" : "false");
+  buildingOptions.classList.remove("hidden");
+  document.body.classList.toggle("build-mode-live", buildMode);
 
   Array.from(grid.children).forEach((tile) => {
     tile.classList.toggle("build-mode", buildMode);
@@ -1089,19 +1834,54 @@ function updateBuildModeVisuals() {
 }
 
 function clearSelectedButtons() {
-  document.querySelectorAll(".building-btn").forEach((button) => {
-    button.classList.remove("selected");
+  selectedBuilding = null;
+  renderBuildingOptions();
+}
+
+function focusBoardForMobilePlacement() {
+  if (
+    !boardStage ||
+    typeof window.matchMedia !== "function" ||
+    !window.matchMedia("(max-width: 760px)").matches
+  ) {
+    return;
+  }
+
+  boardStage.scrollIntoView({
+    behavior: "smooth",
+    block: "start",
   });
 }
 
+function getActivePlacementType() {
+  if (relocationBuildingId) {
+    return findBuildingById(relocationBuildingId)?.type || "";
+  }
+
+  return selectedBuilding || "";
+}
+
+function lockPendingTiles(action, tiles, baseTile) {
+  previewLocked = true;
+  pendingAction = action;
+  lockedPreviewTiles = tiles;
+  pendingTiles = tiles;
+  clearHoverPreview();
+  tiles.forEach((currentTile) => currentTile.classList.add("hovering"));
+  positionConfirmButtons(baseTile);
+  renderBuildingInspector();
+  updateUndoButton();
+}
+
 function updateHoverPreview(tile) {
-  if (!buildMode || !selectedBuilding || previewLocked) {
+  const activeBuildingType = getActivePlacementType();
+  if ((!buildMode && !relocationBuildingId) || !activeBuildingType || previewLocked) {
     return;
   }
 
   clearHoverPreview();
 
-  const tiles = getTilesForPlacement(tile, selectedBuilding);
+  const tiles = getTilesForPlacement(tile, activeBuildingType);
   if (!tiles) {
     return;
   }
@@ -1118,63 +1898,152 @@ function clearHoverPreview() {
 }
 
 function selectPlacement(tile) {
-  if (!buildMode || !selectedBuilding || previewLocked) {
+  const row = Number(tile.dataset.row);
+  const col = Number(tile.dataset.col);
+  const occupant = findBuildingAt(row, col);
+
+  if (previewLocked) {
     return;
   }
 
-  const tiles = getTilesForPlacement(tile, selectedBuilding);
-  if (!tiles) {
-    window.alert("Building is out of bounds.");
+  if (relocationBuildingId) {
+    const movingBuilding = findBuildingById(relocationBuildingId);
+    if (!movingBuilding) {
+      relocationBuildingId = "";
+      renderAll();
+      return;
+    }
+
+    const tiles = getTilesForPlacement(tile, movingBuilding.type);
+    if (!tiles) {
+      window.alert("Building is out of bounds.");
+      return;
+    }
+
+    if (
+      movingBuilding.row === row &&
+      movingBuilding.col === col
+    ) {
+      return;
+    }
+
+    const placement = canPlaceBuilding(state.buildings, movingBuilding.type, row, col, {
+      ignoreBuildingId: relocationBuildingId,
+    });
+    if (!placement.ok) {
+      window.alert(
+        placement.reason === "out-of-bounds"
+          ? "Building is out of bounds."
+          : "Some tiles are already occupied."
+      );
+      return;
+    }
+
+    lockPendingTiles(
+      {
+        type: "move",
+        buildingId: relocationBuildingId,
+        buildingType: movingBuilding.type,
+        row,
+        col,
+      },
+      tiles,
+      tile
+    );
     return;
   }
 
-  if (tiles.some((currentTile) => currentTile.dataset.building)) {
-    window.alert("Some tiles are already occupied.");
+  if (buildMode && selectedBuilding) {
+    if (!isBuildingUnlocked(selectedBuilding)) {
+      window.alert("That building is still locked.");
+      renderBuildingOptions();
+      return;
+    }
+
+    const tiles = getTilesForPlacement(tile, selectedBuilding);
+    if (!tiles) {
+      window.alert("Building is out of bounds.");
+      return;
+    }
+
+    const placement = canPlaceBuilding(state.buildings, selectedBuilding, row, col);
+    if (!placement.ok) {
+      window.alert(
+        placement.reason === "out-of-bounds"
+          ? "Building is out of bounds."
+          : "Some tiles are already occupied."
+      );
+      return;
+    }
+
+    const buildingCost = BUILDINGS[selectedBuilding].cost;
+    if (state.availableSteps < buildingCost) {
+      window.alert("Not enough steps to build.");
+      return;
+    }
+
+    lockPendingTiles(
+      {
+        type: "build",
+        buildingType: selectedBuilding,
+        row,
+        col,
+      },
+      tiles,
+      tile
+    );
     return;
   }
 
-  const buildingCost = BUILDINGS[selectedBuilding].cost;
-  if (state.availableSteps < buildingCost) {
-    window.alert("Not enough steps to build.");
+  if (occupant) {
+    selectedBuildingId = occupant.id;
+    renderAll();
     return;
   }
 
-  previewLocked = true;
-  lockedPreviewTiles = tiles;
-  clearHoverPreview();
-  pendingTiles = tiles;
-  tiles.forEach((currentTile) => currentTile.classList.add("hovering"));
-  positionConfirmButtons(tile);
+  if (selectedBuildingId) {
+    selectedBuildingId = "";
+    renderAll();
+  }
 }
 
 function confirmPlacement() {
-  if (!previewLocked || !selectedBuilding || !pendingTiles.length) {
+  if (!previewLocked || !pendingAction || !pendingTiles.length) {
     return;
   }
 
-  const baseTile = pendingTiles[0];
-  const row = Number(baseTile.dataset.row);
-  const col = Number(baseTile.dataset.col);
+  recordUndoSnapshot();
 
-  pendingTiles.forEach((tile) => {
-    removeTreeAt(Number(tile.dataset.row), Number(tile.dataset.col));
-    tile.classList.add(selectedBuilding);
-    tile.dataset.building = selectedBuilding;
-    const tree = tile.querySelector("img");
-    if (tree) {
-      tree.remove();
+  if (pendingAction.type === "build") {
+    const buildResult = applyBuildAction(state, {
+      buildingType: pendingAction.buildingType,
+      row: pendingAction.row,
+      col: pendingAction.col,
+    });
+    if (!buildResult.ok) {
+      return;
     }
-  });
+    selectedBuildingId = "";
+  } else if (pendingAction.type === "move") {
+    const moveResult = applyMoveAction(state, {
+      buildingId: pendingAction.buildingId,
+      row: pendingAction.row,
+      col: pendingAction.col,
+    });
+    if (moveResult.ok) {
+      selectedBuildingId = pendingAction.buildingId;
+    }
+    relocationBuildingId = "";
+  }
 
-  state.buildings.push({ type: selectedBuilding, row, col });
-  state.availableSteps -= BUILDINGS[selectedBuilding].cost;
   persistState();
-  updateStepCount();
 
   previewLocked = false;
+  pendingAction = null;
   lockedPreviewTiles = [];
   pendingTiles = [];
   hideConfirmButtons();
+  renderAll();
 }
 
 function cancelPlacement() {
@@ -1183,24 +2052,36 @@ function cancelPlacement() {
   }
 
   previewLocked = false;
+  pendingAction = null;
   lockedPreviewTiles = [];
   pendingTiles = [];
   clearHoverPreview();
   hideConfirmButtons();
+  updateUndoButton();
 }
 
 function hideConfirmButtons() {
   confirmButtons.classList.remove("active");
-  window.setTimeout(() => {
+  if (confirmButtonsHideTimerId) {
+    window.clearTimeout(confirmButtonsHideTimerId);
+  }
+
+  confirmButtonsHideTimerId = window.setTimeout(() => {
     confirmButtons.classList.add("hidden");
     confirmButtons.style.left = "";
     confirmButtons.style.top = "";
+    confirmButtonsHideTimerId = null;
   }, 300);
 }
 
 function positionConfirmButtons(baseTile) {
   if (!pendingTiles.length) {
     return;
+  }
+
+  if (confirmButtonsHideTimerId) {
+    window.clearTimeout(confirmButtonsHideTimerId);
+    confirmButtonsHideTimerId = null;
   }
 
   const tileRect = baseTile.getBoundingClientRect();
@@ -1221,14 +2102,10 @@ function resetCity() {
     return;
   }
 
-  const refundedSteps = state.buildings.reduce((total, building) => {
-    const buildingDefinition = BUILDINGS[building.type];
-    return total + (buildingDefinition ? buildingDefinition.cost : 0);
-  }, 0);
-
-  state.availableSteps += refundedSteps;
-  state.buildings = [];
-  state.trees = createInitialTrees();
+  recordUndoSnapshot();
+  applyResetAction(state, { treeFactory: createInitialTrees });
+  selectedBuildingId = "";
+  relocationBuildingId = "";
   persistState();
   exitBuildMode();
   renderAll();
@@ -1266,10 +2143,6 @@ function getTilesForPlacement(baseTile, buildingType) {
   return tiles;
 }
 
-function removeTreeAt(row, col) {
-  state.trees = state.trees.filter((tree) => !(tree.row === row && tree.col === col));
-}
-
 function getSession() {
   return {
     token: accessToken,
@@ -1277,11 +2150,234 @@ function getSession() {
   };
 }
 
+function canUseCloudSave() {
+  const { userId } = getSession();
+  return Boolean(userId) && (!IS_IOS_APP || IOS_WEB_AUTH_ENABLED);
+}
+
+function scheduleCloudSave({ immediate = false } = {}) {
+  if (!canUseCloudSave() || !cloudStateReady || cloudStateUserId !== getSession().userId) {
+    return;
+  }
+
+  if (cloudSaveTimerId) {
+    window.clearTimeout(cloudSaveTimerId);
+    cloudSaveTimerId = null;
+  }
+
+  if (immediate) {
+    void syncCloudStateToServer();
+    return;
+  }
+
+  cloudSaveTimerId = window.setTimeout(() => {
+    cloudSaveTimerId = null;
+    void syncCloudStateToServer();
+  }, CLOUD_SAVE_DEBOUNCE_MS);
+}
+
+async function syncCloudStateToServer() {
+  const { userId } = getSession();
+  if (!userId || !cloudStateReady || cloudStateUserId !== userId || cloudSaveInFlight) {
+    return;
+  }
+
+  cloudSaveInFlight = true;
+  setCloudStatus("Saving city to the cloud...", "syncing");
+
+  try {
+    await ensureGameApiBaseUrl();
+    state.cloudOwnerUserId = userId;
+
+    const response = await fetchWithTimeout(
+      `${getGameApiBase()}/state/${encodeURIComponent(userId)}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          state: getSerializableState(state),
+        }),
+      }
+    );
+
+    const payload = await parseResponseBody(response);
+    if (!response.ok) {
+      throw new Error(safeText(payload.error || payload.message) || `HTTP ${response.status}`);
+    }
+
+    if (payload?.state && typeof payload.state === "object") {
+      replaceState(
+        {
+          ...payload.state,
+          updatedAt: payload.updatedAt || payload.state.updatedAt,
+          cloudOwnerUserId: userId,
+        },
+        { touch: false, skipCloud: true }
+      );
+    } else if (payload?.updatedAt) {
+      state.updatedAt = normalizeBaseIsoTimestamp(payload.updatedAt) || state.updatedAt;
+      persistState(state, { touch: false, skipCloud: true });
+    }
+
+    setCloudStatus("Cloud save synced.", "online");
+  } catch (error) {
+    console.error("Failed to sync Terra Tread cloud save:", error);
+    setCloudStatus("Cloud save pending. Retry when the backend is reachable.", "offline");
+  } finally {
+    cloudSaveInFlight = false;
+  }
+}
+
+async function syncCloudStateForCurrentUser() {
+  const { userId } = getSession();
+  if (!userId) {
+    cloudStateReady = false;
+    cloudStateUserId = "";
+    setCloudStatus("Cloud saves are available after login.", "muted");
+    return;
+  }
+
+  if (cloudSaveTimerId) {
+    window.clearTimeout(cloudSaveTimerId);
+    cloudSaveTimerId = null;
+  }
+
+  cloudSyncInFlight = true;
+  setCloudStatus("Syncing your city from the cloud...", "syncing");
+
+  try {
+    await ensureGameApiBaseUrl();
+    const response = await fetchWithTimeout(
+      `${getGameApiBase()}/state/${encodeURIComponent(userId)}`,
+      {
+        cache: "no-store",
+      }
+    );
+    const payload = await parseResponseBody(response);
+    if (!response.ok) {
+      throw new Error(safeText(payload.error || payload.message) || `HTTP ${response.status}`);
+    }
+
+    const remoteState =
+      payload?.state && typeof payload.state === "object"
+        ? normalizeStatePayload(payload.state, createDefaultState())
+        : null;
+    const remoteUpdatedAt =
+      normalizeBaseIsoTimestamp(payload?.updatedAt || payload?.state?.updatedAt);
+    const localOwnerUserId = safeText(state.cloudOwnerUserId);
+    const localOwnedByDifferentUser = Boolean(localOwnerUserId && localOwnerUserId !== userId);
+    const shouldUseRemoteState =
+      Boolean(remoteState) &&
+      (localOwnedByDifferentUser ||
+        !hasMeaningfulProgress(state) ||
+        getTimestampValue(remoteUpdatedAt || remoteState.updatedAt) >
+          getTimestampValue(state.updatedAt));
+
+    if (shouldUseRemoteState && remoteState) {
+      replaceState(
+        {
+          ...remoteState,
+          updatedAt: remoteUpdatedAt || remoteState.updatedAt,
+          cloudOwnerUserId: userId,
+        },
+        { touch: false, skipCloud: true }
+      );
+      renderAll();
+    } else if (!remoteState && localOwnedByDifferentUser) {
+      replaceState(
+        createDefaultState({
+          cloudOwnerUserId: userId,
+        }),
+        { touch: false, skipCloud: true }
+      );
+      renderAll();
+    } else {
+      state.cloudOwnerUserId = userId;
+      persistState(state, { touch: false, skipCloud: true });
+    }
+
+    cloudStateReady = true;
+    cloudStateUserId = userId;
+
+    if (!remoteState || !shouldUseRemoteState) {
+      await syncCloudStateToServer();
+    } else {
+      setCloudStatus("Cloud save synced.", "online");
+    }
+  } catch (error) {
+    console.error("Failed to load Terra Tread cloud save:", error);
+    cloudStateReady = false;
+    cloudStateUserId = "";
+    setCloudStatus("Cloud saves are unavailable while the backend is offline.", "offline");
+  } finally {
+    cloudSyncInFlight = false;
+  }
+}
+
+async function claimReward(reward) {
+  const { userId } = getSession();
+  if (!userId || !reward?.type || !reward?.dayKey) {
+    return 0;
+  }
+
+  const response = await fetchWithTimeout(
+    `${getGameApiBase()}/streaks/${encodeURIComponent(userId)}/claim`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        type: reward.type,
+        dayKey: reward.dayKey,
+      }),
+    }
+  );
+  const payload = await parseResponseBody(response);
+
+  if (payload?.summary) {
+    setStreakSummary(payload.summary);
+  }
+
+  if (!response.ok) {
+    throw new Error(safeText(payload.error || payload.message) || `HTTP ${response.status}`);
+  }
+
+  return Number.isFinite(payload?.reward?.steps) ? Math.max(0, Math.floor(payload.reward.steps)) : 0;
+}
+
+async function claimAvailableRewards(claimableRewards = []) {
+  if (!Array.isArray(claimableRewards) || !claimableRewards.length) {
+    return 0;
+  }
+
+  let grantedSteps = 0;
+
+  for (const reward of claimableRewards) {
+    try {
+      grantedSteps += await claimReward(reward);
+    } catch (error) {
+      console.error("Failed to claim Terra Tread streak reward:", error);
+    }
+  }
+
+  if (grantedSteps > 0) {
+    state.availableSteps += grantedSteps;
+    persistState();
+    updateStepCount();
+    renderBuildingOptions();
+  }
+
+  return grantedSteps;
+}
+
 function getNativeSyncSummary() {
   const nativeSteps = Number.isFinite(state.lastNativeStepTotal) ? state.lastNativeStepTotal : 0;
   return state.lastNativeStepDate
-    ? `HealthKit synced: ${nativeSteps} steps today`
-    : "Waiting for HealthKit";
+    ? `iPhone steps synced: ${nativeSteps} today`
+    : "Waiting for iPhone step data";
 }
 
 function getPendingNativeSyncPayload() {
@@ -1316,8 +2412,8 @@ function getPendingNativeSyncPayload() {
     body: {
       userId,
       steps: pendingSteps,
-      source: "ios-healthkit",
-      syncKey: `ios-healthkit:${userId}:${dayKey}:${totalSteps}`,
+      source: "ios-motion",
+      syncKey: `ios-motion:${userId}:${dayKey}:${totalSteps}`,
       deviceDayKey: dayKey,
       metadata: {
         platform: "ios-app",
@@ -1353,8 +2449,9 @@ async function syncPendingNativeSteps() {
     state.lastUploadedNativeStepTotal = pendingPayload.totalSteps;
     persistState();
     setConnectionStatus("Backend connected", "online");
+    void fetchStepsFromServer({ applyEntryGrants: false });
   } catch (error) {
-    console.error("Failed to sync iOS HealthKit steps to the Terra Tread backend:", error);
+    console.error("Failed to sync iOS step data to the Terra Tread backend:", error);
     setConnectionStatus("Backend unavailable", "offline");
   }
 }
@@ -1436,7 +2533,7 @@ async function handleAuthButtonClick() {
   }
 }
 
-async function fetchStepsFromServer() {
+async function fetchStepsFromServer({ applyEntryGrants = !IS_IOS_APP } = {}) {
   const { userId } = getSession();
 
   if (!userId || syncInFlight) {
@@ -1463,36 +2560,22 @@ async function fetchStepsFromServer() {
       throw new Error("Unexpected step payload");
     }
 
-    const lastKnownTime = state.lastStepTimestamp
-      ? new Date(state.lastStepTimestamp).getTime()
-      : 0;
-
-    let newestTimestamp = state.lastStepTimestamp;
-    let newSteps = 0;
-
-    entries
-      .slice()
-      .sort((left, right) => new Date(left.timestamp) - new Date(right.timestamp))
-      .forEach((entry) => {
-        const entryTime = new Date(entry.timestamp).getTime();
-        const steps = Number(entry.steps);
-
-        if (!Number.isFinite(entryTime) || !Number.isFinite(steps)) {
-          return;
-        }
-
-        if (entryTime > lastKnownTime && entryTime > new Date(newestTimestamp || 0).getTime()) {
-          newSteps += steps;
-          newestTimestamp = entry.timestamp;
-        }
-      });
-
-    if (newSteps > 0) {
-      state.availableSteps += newSteps;
-      state.lastStepTimestamp = newestTimestamp;
-      persistState();
-      updateStepCount();
+    if (applyEntryGrants) {
+      const stepSync = applyServerStepEntriesToState(state, entries);
+      if (stepSync.grantedSteps > 0) {
+        persistState();
+        updateStepCount();
+        renderBuildingOptions();
+      }
     }
+
+    if (payload?.summary && typeof payload.summary === "object") {
+      setStreakSummary(payload.summary);
+      await claimAvailableRewards(streakSummary.rewards.claimable);
+    } else {
+      setStreakSummary(createEmptyStreakSummary());
+    }
+
     setConnectionStatus("Backend connected", "online");
   } catch (error) {
     console.error("Error fetching steps:", error);
@@ -1540,9 +2623,30 @@ function registerTestingHooks() {
       coordinateSystem: "row/col with origin at the top-left of the 20x20 grid",
       buildMode,
       selectedBuilding,
+      selectedBuildingId,
+      relocationBuildingId,
       availableSteps: state.availableSteps,
+      cityLevel: currentCitySummary.level,
+      prosperity: currentCitySummary.prosperity,
+      nextUnlock: currentCitySummary.nextUnlock?.[0] || null,
+      cityStats: currentCitySummary.stats,
+      prosperityBonus: currentCitySummary.prosperityBonus,
       playerStatus: playerStatus.textContent,
-      buildings: state.buildings,
+      cloudStatus: cloudStatus?.textContent || "",
+      streak: streakSummary.streak,
+      dailyGoal: streakSummary.dailyGoal,
+      contracts: {
+        daily: evaluateContract(state.contracts?.daily, currentCitySummary),
+        weekly: evaluateContract(state.contracts?.weekly, currentCitySummary),
+      },
+      canUndo: undoStack.length > 0,
+      buildings: state.buildings.map((building) => ({
+        id: building.id,
+        type: building.type,
+        row: building.row,
+        col: building.col,
+        level: building.level,
+      })),
       treeCount: state.trees.length,
     });
 }

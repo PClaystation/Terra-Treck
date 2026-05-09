@@ -4,47 +4,151 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Terra Tread</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="style.css" />
-  <link rel="icon" href="images/Terra-tread-logo-nbg-w (2).png" type="image/x-icon">
+  <link rel="icon" href="images/Terra-tread-logo-nbg-w (2).png" type="image/x-icon" />
 </head>
 <body>
-  <header>
-    <div class="brand-block">
-      <h1>Terra Tread</h1>
-      <p id="player-status" aria-live="polite">Guest mode</p>
-      <p id="connection-status" aria-live="polite">Checking backend connection...</p>
-    </div>
-    <div class="header-actions">
-      <div id="step-count-container">
-        Steps: <span id="step-count">0</span>
+  <div class="app-shell">
+    <div class="atmosphere-layer atmosphere-layer-a" aria-hidden="true"></div>
+    <div class="atmosphere-layer atmosphere-layer-b" aria-hidden="true"></div>
+
+    <header class="topbar">
+      <div class="brand-block">
+        <div class="brand-seal" aria-hidden="true">TT</div>
+        <div class="brand-copy">
+          <h1>Terra Tread</h1>
+          <div class="status-cluster">
+            <span id="player-status" class="status-pill status-pill-player" aria-live="polite">Guest mode</span>
+            <span id="connection-status" class="status-pill" aria-live="polite">Checking backend connection...</span>
+            <span id="cloud-status" class="status-pill" aria-live="polite">Cloud saves are available after login.</span>
+          </div>
+        </div>
       </div>
-      <button id="reset-button" type="button">Reset</button>
-      <button id="auth-button" type="button">Login</button>
+
+      <div class="header-actions">
+        <div id="step-count-container" class="resource-pill" aria-live="polite">
+          <span class="resource-label">Step Bank</span>
+          <span id="step-count">0</span>
+        </div>
+        <button id="undo-button" type="button" disabled>Undo</button>
+        <button id="reset-button" type="button">Reset</button>
+        <button id="auth-button" type="button">Login</button>
+      </div>
+    </header>
+
+    <div class="workspace">
+      <aside class="sidebar sidebar-left">
+        <section id="city-overview" class="overview-stack" aria-live="polite">
+          <article class="panel city-level-card">
+            <div class="panel-heading">
+              <p class="city-kicker">City Level</p>
+              <span class="panel-chip">Live</span>
+            </div>
+            <div class="level-display">
+              <strong id="city-level">1</strong>
+              <span class="level-caption">District standing</span>
+            </div>
+          </article>
+
+          <article class="panel prosperity-card">
+            <div class="panel-heading">
+              <p class="city-kicker">Prosperity</p>
+              <span class="panel-chip">Growth</span>
+            </div>
+            <p id="city-prosperity">0 prosperity</p>
+            <div id="city-progress-track" aria-hidden="true">
+              <div id="city-progress-bar"></div>
+            </div>
+            <p id="next-unlock">Next unlock: Park at level 2</p>
+          </article>
+
+          <article class="panel stats-card">
+            <div class="panel-heading">
+              <p class="city-kicker">City Stats</p>
+              <span class="panel-chip">Overview</span>
+            </div>
+            <div id="city-stats" class="city-stats"></div>
+          </article>
+        </section>
+
+        <aside id="building-inspector" class="panel hidden" aria-live="polite">
+          <p class="city-kicker">Selected Plot</p>
+          <div class="inspector-header">
+            <strong id="inspector-name">No building selected</strong>
+            <span id="inspector-level">Lv 1</span>
+          </div>
+          <p id="inspector-meta">Tap a placed building to inspect it.</p>
+          <p id="inspector-effects">Upgrades improve base output and adjacency synergies.</p>
+          <div class="inspector-actions">
+            <button id="upgrade-button" type="button">Upgrade</button>
+            <button id="move-button" type="button">Move</button>
+            <button id="demolish-button" type="button">Demolish</button>
+          </div>
+        </aside>
+      </aside>
+
+      <main class="board-stage">
+        <section class="board-shell" aria-label="City board">
+          <div id="grid-wrapper">
+            <div class="board-frame">
+              <div class="board-frame-inner">
+                <div id="grid"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <aside class="sidebar sidebar-right">
+        <article class="panel streak-card">
+          <div class="panel-heading">
+            <p class="city-kicker">Daily Trek</p>
+            <span class="panel-chip">Momentum</span>
+          </div>
+          <div class="city-level-row">
+            <strong id="streak-count">0</strong>
+            <span id="streak-label">Current streak</span>
+          </div>
+          <p id="streak-subtext">Login to sync streaks and cloud saves across devices.</p>
+          <div id="daily-goal-track" aria-hidden="true">
+            <div id="daily-goal-bar"></div>
+          </div>
+          <p id="daily-goal-progress">0 / 4,000 steps today</p>
+          <p id="daily-goal-status">Reach 4,000 steps for a 150-step daily bonus.</p>
+        </article>
+
+        <article class="panel contracts-card">
+          <div class="contracts-header">
+            <div class="panel-heading">
+              <p class="city-kicker">Contracts</p>
+              <span class="panel-chip">Daily + Weekly</span>
+            </div>
+            <p id="contracts-summary">Daily and weekly goals refresh automatically.</p>
+          </div>
+          <div id="contracts-list" class="contracts-list"></div>
+        </article>
+
+        <section class="panel build-panel">
+          <div class="build-panel-top">
+            <div class="build-panel-copy">
+              <p class="city-kicker">Build Palette</p>
+              <p class="build-panel-note">Open build mode to place districts on the city grid.</p>
+            </div>
+            <button id="build-toggle" type="button" aria-label="Toggle build mode">Build Mode</button>
+          </div>
+          <div id="building-options" class="hidden" aria-label="Available buildings"></div>
+        </section>
+      </aside>
     </div>
-  </header>
-
-  <button id="build-toggle" class="circle-btn" aria-label="Toggle build mode">🔨</button>
-
-  <div id="building-options" class="hidden">
-    <button class="building-btn circle-btn" data-name="house" data-cost="100" aria-label="Build House">🏠</button>
-    <button class="building-btn circle-btn" data-name="shop" data-cost="200" aria-label="Build Shop">🏪</button>
-    <button class="building-btn circle-btn" data-name="park" data-cost="150" aria-label="Build Park">🌳</button>
   </div>
 
   <div id="confirm-buttons" class="hidden">
-    <button id="confirm-build" class="confirm-circle-btn confirm-btn">✓</button>
-    <button id="cancel-build" class="confirm-circle-btn cancel-btn">✗</button>
+    <button id="confirm-build" class="confirm-circle-btn confirm-btn" type="button" aria-label="Confirm build">✓</button>
+    <button id="cancel-build" class="confirm-circle-btn cancel-btn" type="button" aria-label="Cancel build">✕</button>
   </div>
-  
-  
-  
 
-  <main>
-    <div id="grid-wrapper">
-      <div id="grid"></div>
-    </div>
-  </main>
-
-  <script src="script.js"></script>
+  <script type="module" src="script.js"></script>
 </body>
 </html>

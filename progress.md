@@ -15,3 +15,17 @@ Original prompt: Look trough this project and find errors then fix them. Just im
 - `node --check script.js` passes.
 - Manual Playwright smoke test confirmed guest-mode render, building a house reduces steps from 1000 to 900, and the placed building survives a reload.
 - A locator screenshot of the grid wrapper rendered correctly after the CSS/UI rewrite.
+- Added building ids and levels plus persistent upgrade data in the web client and backend cloud-state sanitizer.
+- Added a contracts system with one rotating daily contract and one rotating weekly contract, claim buttons, progress bars, and persisted claim state.
+- Added a building inspector with upgrade, move, demolish, and global undo flows.
+- Fixed a regression where the inspector reopened after each build and blocked follow-up placement clicks during build mode.
+- Adjusted claimed-contract rendering so completed rewards stay visually complete even if the city later changes.
+- Verification:
+- `node --check script.js` passes after the feature work.
+- `node --check backend/index.js` passes after the cloud-state schema update.
+- Playwright smoke scenario passed from a clean local save on `http://localhost:3001/`:
+- built 5 houses, upgraded 1, moved it, undid the move, claimed both contracts, then demolished the upgraded house.
+- Final verified state from `output/web-game/feature-flow-final/snapshots.json`:
+- after upgrade: both contracts completed, upgraded house at row 10 col 8, steps 440.
+- after claims: steps 1130 with both contracts marked claimed.
+- after demolish: 4 houses remain and steps total 1242.
