@@ -61,6 +61,7 @@ const AUTH_API_FALLBACK_URL =
 const GAME_API_FALLBACK_URL =
   window.__GAME_API_BASE_URL__ || APP_CONTEXT.gameApiBaseUrl || "";
 const TRUSTED_API_ORIGINS = new Set([
+  "http://mpmc.ddns.net:4010",
   "https://dashboard.continental-hub.com",
   "https://grimoire.continental-hub.com",
   "https://login.continental-hub.com",
