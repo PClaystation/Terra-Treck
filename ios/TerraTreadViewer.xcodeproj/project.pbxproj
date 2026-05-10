@@ -7,27 +7,39 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0E80E92A5D11522D1B931C35 /* app in Resources */ = {isa = PBXBuildFile; fileRef = 1C5B66B12F8B62E126A22832 /* app */; };
+		2131EB63AF6C53A8DBBA4653 /* login.html in Resources */ = {isa = PBXBuildFile; fileRef = F2654339E9A45216DE5FCF72 /* login.html */; };
 		2AE07D4C10C3B4862C7A81E8 /* StepSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 126BE4827A6A9765BFBF52C5 /* StepSyncService.swift */; };
 		4CD87AEC58EBDECA204DBBF0 /* TerraTreadViewerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 211ECC31F9F36A986C17E341 /* TerraTreadViewerApp.swift */; };
+		71320E447F8C9C12C32930BB /* index.html in Resources */ = {isa = PBXBuildFile; fileRef = A45E5B56420CF4B1B0C05E7A /* index.html */; };
 		760E0AE6FCE9551F0FC5106D /* AppConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F708A204922AD36DB484958 /* AppConfiguration.swift */; };
 		81421770AE7E1AEB84010D62 /* TerraTreadWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D81541006BD9A2E8F0F93680 /* TerraTreadWebView.swift */; };
 		8DA4210C6923592BF75187F4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BC40E145531ABF339BCDF790 /* Assets.xcassets */; };
+		A0E1633803AB4070EE89AA6A /* style.css in Resources */ = {isa = PBXBuildFile; fileRef = C0E463C2A5A5D8F4D1A75AD2 /* style.css */; };
 		C56B82CA3011B822372598BD /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 618EACD2A56F507CA4B197EE /* RootView.swift */; };
 		D861B29ADB98F16B46FF9BFC /* WebContainerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F77F3F5A3E618361E38F4F0 /* WebContainerViewController.swift */; };
+		F5781F71AD8C63792A6E4D79 /* images in Resources */ = {isa = PBXBuildFile; fileRef = 1508087E0F695F250F0EA119 /* images */; };
+		F66985AFA74FF60CC3200C58 /* script.js in Resources */ = {isa = PBXBuildFile; fileRef = 8C55741C71AC305D80A0134A /* script.js */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		02A9B1FE87595E4F76BE8A22 /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
+		1508087E0F695F250F0EA119 /* images */ = {isa = PBXFileReference; lastKnownFileType = folder; name = images; path = ../images; sourceTree = SOURCE_ROOT; };
 		126BE4827A6A9765BFBF52C5 /* StepSyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepSyncService.swift; sourceTree = "<group>"; };
 		1622AD3403441DD85359A962 /* TerraTreadViewer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TerraTreadViewer.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		1C5B66B12F8B62E126A22832 /* app */ = {isa = PBXFileReference; lastKnownFileType = folder; name = app; path = ../app; sourceTree = SOURCE_ROOT; };
 		211ECC31F9F36A986C17E341 /* TerraTreadViewerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerraTreadViewerApp.swift; sourceTree = "<group>"; };
 		3D595396ECE3CCC0B4D4A6A5 /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
 		618EACD2A56F507CA4B197EE /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		7F708A204922AD36DB484958 /* AppConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfiguration.swift; sourceTree = "<group>"; };
+		8C55741C71AC305D80A0134A /* script.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = script.js; path = ../script.js; sourceTree = SOURCE_ROOT; };
 		9F77F3F5A3E618361E38F4F0 /* WebContainerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebContainerViewController.swift; sourceTree = "<group>"; };
+		A45E5B56420CF4B1B0C05E7A /* index.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; name = index.html; path = ../index.html; sourceTree = SOURCE_ROOT; };
 		AAA4D53E0D1DF5757E8CEB81 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		BC40E145531ABF339BCDF790 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Assets.xcassets; path = TerraTreadViewer/Assets.xcassets; sourceTree = SOURCE_ROOT; };
+		C0E463C2A5A5D8F4D1A75AD2 /* style.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; name = style.css; path = ../style.css; sourceTree = SOURCE_ROOT; };
 		D81541006BD9A2E8F0F93680 /* TerraTreadWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerraTreadWebView.swift; sourceTree = "<group>"; };
+		F2654339E9A45216DE5FCF72 /* login.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; name = login.html; path = ../login.html; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -42,8 +54,14 @@
 		91D61A1FA00906FE8254D06B = {
 			isa = PBXGroup;
 			children = (
+				1C5B66B12F8B62E126A22832 /* app */,
 				BC40E145531ABF339BCDF790 /* Assets.xcassets */,
 				ECD1E962D46D98156B41CBEC /* Configs */,
+				8C55741C71AC305D80A0134A /* script.js */,
+				A45E5B56420CF4B1B0C05E7A /* index.html */,
+				1508087E0F695F250F0EA119 /* images */,
+				F2654339E9A45216DE5FCF72 /* login.html */,
+				C0E463C2A5A5D8F4D1A75AD2 /* style.css */,
 				D55E9D1792E9E983883E310C /* TerraTreadViewer */,
 				13B04F3F931ECD78DD0C5A21 /* Products */,
 			);
@@ -131,6 +149,12 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				71320E447F8C9C12C32930BB /* index.html in Resources */,
+				2131EB63AF6C53A8DBBA4653 /* login.html in Resources */,
+				F66985AFA74FF60CC3200C58 /* script.js in Resources */,
+				A0E1633803AB4070EE89AA6A /* style.css in Resources */,
+				0E80E92A5D11522D1B931C35 /* app in Resources */,
+				F5781F71AD8C63792A6E4D79 /* images in Resources */,
 				8DA4210C6923592BF75187F4 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

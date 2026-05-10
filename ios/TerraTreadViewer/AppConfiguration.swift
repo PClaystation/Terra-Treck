@@ -10,8 +10,8 @@ struct AppConfiguration {
     let allowsWebAuth: Bool
 
     init(bundle: Bundle) {
-        remoteWebURL = Self.makeURL(from: bundle.string(for: "TERRA_TREAD_WEB_URL"))
-        gameAPIBaseURL = Self.makeURL(from: bundle.string(for: "TERRA_TREAD_GAME_API_BASE_URL"))
+        remoteWebURL = Self.makeReachableURL(from: bundle.string(for: "TERRA_TREAD_WEB_URL"))
+        gameAPIBaseURL = Self.makeReachableURL(from: bundle.string(for: "TERRA_TREAD_GAME_API_BASE_URL"))
         authAPIBaseURL = Self.makeURL(from: bundle.string(for: "TERRA_TREAD_AUTH_API_BASE_URL"))
         loginPopupURL = Self.makeURL(from: bundle.string(for: "TERRA_TREAD_LOGIN_POPUP_URL"))
         allowsWebAuth = Self.makeBool(from: bundle.string(for: "TERRA_TREAD_ALLOW_WEB_AUTH"), defaultValue: true)
@@ -64,6 +64,34 @@ struct AppConfiguration {
             return nil
         }
         return URL(string: normalized)
+    }
+
+    private static func makeReachableURL(from value: String?) -> URL? {
+        guard let url = makeURL(from: value) else {
+            return nil
+        }
+
+        guard shouldAllowLoopbackURL(url) else {
+            return nil
+        }
+
+        return url
+    }
+
+    private static func shouldAllowLoopbackURL(_ url: URL) -> Bool {
+        guard let host = url.host?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() else {
+            return true
+        }
+
+        guard host == "localhost" || host == "127.0.0.1" else {
+            return true
+        }
+
+#if targetEnvironment(simulator)
+        return true
+#else
+        return false
+#endif
     }
 
     private static func makeBool(from value: String?, defaultValue: Bool) -> Bool {
