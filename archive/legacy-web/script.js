@@ -90,9 +90,9 @@ const STREAK_MILESTONE_REWARD = 250;
 const MAX_UNDO_ENTRIES = 25;
 
 const TREE_IMAGES = [
-  "./images/Tree1-removebg-preview.png",
-  "./images/Tree2-removebg-preview.png",
-  "./images/Tree3-removebg-preview.png",
+  "../images/Tree1-removebg-preview.png",
+  "../images/Tree2-removebg-preview.png",
+  "../images/Tree3-removebg-preview.png",
 ];
 
 const grid = document.getElementById("grid");

@@ -34,7 +34,7 @@
   <key>NSMotionUsageDescription</key>
   <string>Terra Tread uses your daily step count to power the city builder.</string>
   <key>NSMicrophoneUsageDescription</key>
-  <string>Terra Tread uses microphone access only when web content inside the app explicitly requests it.</string>
+  <string>Terra Tread does not use microphone access during gameplay. The permission is only exposed if an external sign-in provider requests it.</string>
   <key>TERRA_TREAD_ALLOW_WEB_AUTH</key>
   <string>$(TERRA_TREAD_ALLOW_WEB_AUTH)</string>
   <key>TERRA_TREAD_AUTH_API_BASE_URL</key>
@@ -43,8 +43,6 @@
   <string>$(TERRA_TREAD_GAME_API_BASE_URL)</string>
   <key>TERRA_TREAD_LOGIN_POPUP_URL</key>
   <string>$(TERRA_TREAD_LOGIN_POPUP_URL)</string>
-  <key>TERRA_TREAD_WEB_URL</key>
-  <string>$(TERRA_TREAD_WEB_URL)</string>
   <key>UIApplicationSupportsIndirectInputEvents</key>
   <true/>
   <key>UILaunchScreen</key>

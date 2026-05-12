@@ -1,7 +1,7 @@
 {
   "name": "terra-tread-backend",
   "version": "1.0.0",
-  "description": "",
+  "description": "API service for the Terra Tread native iOS game.",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",

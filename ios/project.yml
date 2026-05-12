@@ -8,7 +8,7 @@ configs:
   Release: release
 settings:
   base:
-    PRODUCT_NAME: TerraTreadViewer
+    PRODUCT_NAME: TerraTread
     PRODUCT_BUNDLE_IDENTIFIER: com.terratread.viewer
     MARKETING_VERSION: 1.0
     CURRENT_PROJECT_VERSION: 1
@@ -21,7 +21,7 @@ settings:
     CODE_SIGN_STYLE: Automatic
     ENABLE_PREVIEWS: YES
 targets:
-  TerraTreadViewer:
+  TerraTread:
     type: application
     platform: iOS
     configFiles:
@@ -34,11 +34,6 @@ targets:
       - path: TerraTreadViewer/Assets.xcassets
         type: folder
     resources:
-      - ../index.html
-      - ../login.html
-      - ../script.js
-      - ../style.css
-      - ../app
       - ../images
     settings:
       base:

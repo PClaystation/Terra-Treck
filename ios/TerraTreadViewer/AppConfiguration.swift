@@ -3,59 +3,57 @@ import Foundation
 struct AppConfiguration {
     static let current = AppConfiguration(bundle: .main)
 
-    let remoteWebURL: URL?
     let gameAPIBaseURL: URL?
     let authAPIBaseURL: URL?
     let loginPopupURL: URL?
     let allowsWebAuth: Bool
 
     init(bundle: Bundle) {
-        remoteWebURL = Self.makeReachableURL(from: bundle.string(for: "TERRA_TREAD_WEB_URL"))
         gameAPIBaseURL = Self.makeReachableURL(from: bundle.string(for: "TERRA_TREAD_GAME_API_BASE_URL"))
         authAPIBaseURL = Self.makeURL(from: bundle.string(for: "TERRA_TREAD_AUTH_API_BASE_URL"))
         loginPopupURL = Self.makeURL(from: bundle.string(for: "TERRA_TREAD_LOGIN_POPUP_URL"))
         allowsWebAuth = Self.makeBool(from: bundle.string(for: "TERRA_TREAD_ALLOW_WEB_AUTH"), defaultValue: true)
     }
 
-    func bridgeContext(allowsWebAuth: Bool, contentMode: String) -> WebBridgeContext {
-        WebBridgeContext(
-            platform: "ios-app",
-            allowsWebAuth: allowsWebAuth,
-            contentMode: contentMode,
-            authAPIBaseURL: authAPIBaseURL?.absoluteString,
-            gameAPIBaseURL: gameAPIBaseURL?.absoluteString,
-            loginPopupURL: loginPopupURL?.absoluteString,
-            appVersion: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String,
-            buildNumber: Bundle.main.object(forInfoDictionaryKey: kCFBundleVersionKey as String) as? String
-        )
+    var effectiveGameAPIBaseURL: URL? {
+        gameAPIBaseURL
     }
 
-    var trustedHosts: Set<String> {
-        [
-            remoteWebURL?.host,
-            gameAPIBaseURL?.host,
-            authAPIBaseURL?.host,
-            loginPopupURL?.host,
-            "continental-hub.com",
-            "auth.continental-hub.com",
-            "login.continental-hub.com",
-            "dashboard.continental-hub.com",
-            "grimoire.continental-hub.com",
-            "api.continental-hub.com",
-            "id.continental-hub.com",
-            "backend.continental-hub.com",
-            "mpmc.ddns.net",
-            "localhost",
-            "127.0.0.1",
-        ]
-        .compactMap { value in
-            guard let value else { return nil }
-            let normalized = value.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-            return normalized.isEmpty ? nil : normalized
+    var effectiveAuthAPIBaseURL: URL? {
+        authAPIBaseURL ?? URL(string: "https://auth.continental-hub.com")
+    }
+
+    var effectiveLoginPopupURL: URL? {
+        loginPopupURL ?? URL(string: "https://login.continental-hub.com/popup.html")
+    }
+
+    var effectiveNativeLoginURL: URL? {
+        guard let popupURL = effectiveLoginPopupURL,
+              var components = URLComponents(url: popupURL, resolvingAgainstBaseURL: false) else {
+            return effectiveLoginPopupURL
         }
-        .reduce(into: Set<String>()) { partialResult, host in
-            partialResult.insert(host)
+
+        let trustedOrigin = popupURL.originString ?? "https://login.continental-hub.com"
+        let redirectTarget = popupURL.absoluteString
+        var queryItems = components.queryItems ?? []
+
+        upsertQueryItem(named: "origin", value: trustedOrigin, into: &queryItems)
+        upsertQueryItem(named: "redirect", value: redirectTarget, into: &queryItems)
+
+        if let authBaseURL = effectiveAuthAPIBaseURL?.absoluteString {
+            upsertQueryItem(named: "apiBaseUrl", value: authBaseURL, into: &queryItems)
         }
+
+        if let gameBaseURL = effectiveGameAPIBaseURL?.absoluteString {
+            upsertQueryItem(named: "gameApiBaseUrl", value: gameBaseURL, into: &queryItems)
+        }
+
+        components.queryItems = queryItems
+        return components.url
+    }
+
+    var canAuthenticateInApp: Bool {
+        allowsWebAuth && effectiveAuthAPIBaseURL != nil && effectiveNativeLoginURL != nil
     }
 
     private static func makeURL(from value: String?) -> URL? {
@@ -109,6 +107,14 @@ struct AppConfiguration {
             return defaultValue
         }
     }
+
+    private func upsertQueryItem(named name: String, value: String, into queryItems: inout [URLQueryItem]) {
+        if let index = queryItems.firstIndex(where: { $0.name == name }) {
+            queryItems[index] = URLQueryItem(name: name, value: value)
+        } else {
+            queryItems.append(URLQueryItem(name: name, value: value))
+        }
+    }
 }
 
 private extension Bundle {
@@ -117,24 +123,16 @@ private extension Bundle {
     }
 }
 
-struct WebBridgeContext: Encodable {
-    let platform: String
-    let allowsWebAuth: Bool
-    let contentMode: String
-    let authAPIBaseURL: String?
-    let gameAPIBaseURL: String?
-    let loginPopupURL: String?
-    let appVersion: String?
-    let buildNumber: String?
+private extension URL {
+    var originString: String? {
+        guard let scheme, let host else {
+            return nil
+        }
 
-    enum CodingKeys: String, CodingKey {
-        case platform
-        case allowsWebAuth
-        case contentMode
-        case authAPIBaseURL = "authApiBaseUrl"
-        case gameAPIBaseURL = "gameApiBaseUrl"
-        case loginPopupURL = "loginPopupUrl"
-        case appVersion
-        case buildNumber
+        if let port {
+            return "\(scheme)://\(host):\(port)"
+        }
+
+        return "\(scheme)://\(host)"
     }
 }

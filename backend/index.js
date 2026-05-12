@@ -9,7 +9,6 @@ const path = require("path");
 const app = express();
 
 const PORT = parseInt(process.env.PORT || "3000", 10);
-const ROOT_DIR = path.resolve(__dirname, "..");
 const DATA_DIR = process.env.TERRA_TREAD_DATA_DIR
   ? path.resolve(process.env.TERRA_TREAD_DATA_DIR)
   : path.join(__dirname, "data");
@@ -17,7 +16,9 @@ const STEP_LOG_PATH = process.env.TERRA_TREAD_STEP_LOG_PATH
   ? path.resolve(process.env.TERRA_TREAD_STEP_LOG_PATH)
   : path.join(DATA_DIR, "steps.log");
 const PROFILE_DIR = path.join(DATA_DIR, "profiles");
-const WEBSITE_BASE_URL = normalizeBaseUrl(process.env.TERRA_TREAD_WEBSITE_BASE_URL);
+const PUBLIC_BASE_URL = normalizeBaseUrl(
+  process.env.TERRA_TREAD_PUBLIC_BASE_URL || process.env.TERRA_TREAD_WEBSITE_BASE_URL
+);
 const AUTH_API_BASE_URL =
   normalizeBaseUrl(process.env.TERRA_TREAD_AUTH_API_BASE_URL) ||
   "https://auth.continental-hub.com";
@@ -27,6 +28,9 @@ const LOGIN_POPUP_URL =
   "https://login.continental-hub.com/popup.html";
 
 const GRID_SIZE = 20;
+const WORLD_BUILD_RADIUS = 220;
+const WORLD_MIN_COORDINATE = -WORLD_BUILD_RADIUS;
+const WORLD_MAX_COORDINATE = WORLD_BUILD_RADIUS;
 const TREE_VARIANT_COUNT = 3;
 const CLOUD_STATE_SCHEMA_VERSION = 2;
 const DAILY_STEP_GOAL = 4000;
@@ -56,12 +60,12 @@ app.get("/api/health", (req, res) => {
   const requestOrigin = getRequestOrigin(req);
   res.json({
     status: "ok",
-    service: "terra-tread-backend",
+    service: "terra-tread-api",
+    product: "terra-tread-ios",
     timestamp: new Date().toISOString(),
     protocol: isHttpsEnabled() ? "https" : "http",
     authApiBaseUrl: AUTH_API_BASE_URL,
     gameApiBaseUrl: GAME_API_BASE_URL || requestOrigin,
-    websiteBaseUrl: WEBSITE_BASE_URL || requestOrigin,
     loginPopupUrl: LOGIN_POPUP_URL,
   });
 });
@@ -71,7 +75,6 @@ app.get("/api/client-config", (req, res) => {
   res.json({
     authApiBaseUrl: AUTH_API_BASE_URL,
     gameApiBaseUrl: GAME_API_BASE_URL || requestOrigin,
-    websiteBaseUrl: WEBSITE_BASE_URL || requestOrigin,
     loginPopupUrl: LOGIN_POPUP_URL,
   });
 });
@@ -93,28 +96,35 @@ app.get("/steps/:userId", async (req, res) => {
   return res.json(result.entries);
 });
 
-app.get("/", (_req, res) => {
-  res.sendFile(path.join(ROOT_DIR, "index.html"));
+app.get("/", (req, res) => {
+  const requestOrigin = getRequestOrigin(req);
+  res.json({
+    product: "Terra Tread",
+    platform: "iOS",
+    service: "backend-api",
+    status: "ok",
+    gameApiBaseUrl: GAME_API_BASE_URL || requestOrigin,
+    message:
+      "Terra Tread now ships as a native iOS game. This service handles step sync, cloud saves, and reward APIs.",
+    legacyWebArchivePath: "archive/legacy-web",
+  });
 });
 
-app.get("/index.html", (_req, res) => {
-  res.sendFile(path.join(ROOT_DIR, "index.html"));
-});
+const retiredWebClientResponse = {
+  error: "The legacy Terra Tread browser client has been archived.",
+  message: "Use the native iOS app in ios/ instead of the retired web client.",
+  archivePath: "archive/legacy-web",
+};
 
-app.get("/login.html", (_req, res) => {
-  res.sendFile(path.join(ROOT_DIR, "login.html"));
-});
+for (const route of ["/index.html", "/login.html", "/script.js", "/style.css"]) {
+  app.get(route, (_req, res) => {
+    res.status(410).json(retiredWebClientResponse);
+  });
+}
 
-app.get("/script.js", (_req, res) => {
-  res.sendFile(path.join(ROOT_DIR, "script.js"));
+app.use("/app", (_req, res) => {
+  res.status(410).json(retiredWebClientResponse);
 });
-
-app.get("/style.css", (_req, res) => {
-  res.sendFile(path.join(ROOT_DIR, "style.css"));
-});
-
-app.use("/app", express.static(path.join(ROOT_DIR, "app")));
-app.use("/images", express.static(path.join(ROOT_DIR, "images")));
 
 async function handleCreateStepEntry(req, res) {
   const validation = validateStepPayload(req.body || {});
@@ -301,8 +311,8 @@ function normalizeBaseUrl(value) {
 }
 
 function getRequestOrigin(req) {
-  if (WEBSITE_BASE_URL) {
-    return WEBSITE_BASE_URL;
+  if (PUBLIC_BASE_URL) {
+    return PUBLIC_BASE_URL;
   }
 
   return `${req.protocol}://${req.get("host")}`;
@@ -436,10 +446,10 @@ function sanitizeBuildings(source) {
         !definition ||
         row === null ||
         col === null ||
-        row < 0 ||
-        col < 0 ||
-        row + definition.height > GRID_SIZE ||
-        col + definition.width > GRID_SIZE
+        row < WORLD_MIN_COORDINATE ||
+        col < WORLD_MIN_COORDINATE ||
+        row + definition.height > WORLD_MAX_COORDINATE + 1 ||
+        col + definition.width > WORLD_MAX_COORDINATE + 1
       ) {
         return null;
       }
@@ -485,10 +495,10 @@ function sanitizeTrees(source) {
         row === null ||
         col === null ||
         imageIndex === null ||
-        row < 0 ||
-        col < 0 ||
-        row >= GRID_SIZE ||
-        col >= GRID_SIZE ||
+        row < WORLD_MIN_COORDINATE ||
+        col < WORLD_MIN_COORDINATE ||
+        row > WORLD_MAX_COORDINATE ||
+        col > WORLD_MAX_COORDINATE ||
         imageIndex < 0 ||
         imageIndex >= TREE_VARIANT_COUNT
       ) {

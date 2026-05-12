@@ -7,46 +7,44 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		0E80E92A5D11522D1B931C35 /* app in Resources */ = {isa = PBXBuildFile; fileRef = 1C5B66B12F8B62E126A22832 /* app */; };
-		2131EB63AF6C53A8DBBA4653 /* login.html in Resources */ = {isa = PBXBuildFile; fileRef = F2654339E9A45216DE5FCF72 /* login.html */; };
-		2AE07D4C10C3B4862C7A81E8 /* StepSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 126BE4827A6A9765BFBF52C5 /* StepSyncService.swift */; };
-		4CD87AEC58EBDECA204DBBF0 /* TerraTreadViewerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 211ECC31F9F36A986C17E341 /* TerraTreadViewerApp.swift */; };
-		71320E447F8C9C12C32930BB /* index.html in Resources */ = {isa = PBXBuildFile; fileRef = A45E5B56420CF4B1B0C05E7A /* index.html */; };
-		760E0AE6FCE9551F0FC5106D /* AppConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F708A204922AD36DB484958 /* AppConfiguration.swift */; };
-		81421770AE7E1AEB84010D62 /* TerraTreadWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D81541006BD9A2E8F0F93680 /* TerraTreadWebView.swift */; };
-		8DA4210C6923592BF75187F4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BC40E145531ABF339BCDF790 /* Assets.xcassets */; };
-		A0E1633803AB4070EE89AA6A /* style.css in Resources */ = {isa = PBXBuildFile; fileRef = C0E463C2A5A5D8F4D1A75AD2 /* style.css */; };
-		C56B82CA3011B822372598BD /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 618EACD2A56F507CA4B197EE /* RootView.swift */; };
-		D861B29ADB98F16B46FF9BFC /* WebContainerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F77F3F5A3E618361E38F4F0 /* WebContainerViewController.swift */; };
-		F5781F71AD8C63792A6E4D79 /* images in Resources */ = {isa = PBXBuildFile; fileRef = 1508087E0F695F250F0EA119 /* images */; };
-		F66985AFA74FF60CC3200C58 /* script.js in Resources */ = {isa = PBXBuildFile; fileRef = 8C55741C71AC305D80A0134A /* script.js */; };
+		12C7B2333C6705FAB264A838 /* CityBoardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECE7AAAE5D802100C75D8B47 /* CityBoardView.swift */; };
+		1331CFBFE276B18C51077459 /* GameBackendClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A775C06F56AB6C311C6BDAC4 /* GameBackendClient.swift */; };
+		18F5EFB3944EEBDC19F55C52 /* TerraTreadModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C6DD96EE04A5964A3DC3091 /* TerraTreadModels.swift */; };
+		45CC41A2C38087FAD5F74F20 /* AuthWebSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46D4520DAB196275A600D30E /* AuthWebSheet.swift */; };
+		6B4557E891DEC8E9320494B1 /* GameEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2078EC3F3638FEE86696DA71 /* GameEngine.swift */; };
+		7DBBB8B4EE5A79B727EE550B /* AppConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F708A204922AD36DB484958 /* AppConfiguration.swift */; };
+		7EBFD8C6E2FA77D83101AF21 /* TerraTreadViewerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 211ECC31F9F36A986C17E341 /* TerraTreadViewerApp.swift */; };
+		8180D29B61DA32668C4D8604 /* StepSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 126BE4827A6A9765BFBF52C5 /* StepSyncService.swift */; };
+		8D1414167D4A3787A61AF035 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BC40E145531ABF339BCDF790 /* Assets.xcassets */; };
+		A4E1D00F11FFD9BCFC8D3AE9 /* GamePersistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCDA97BB3111C9F7206A3D7B /* GamePersistence.swift */; };
+		B361D9A0B6F3B00ED491BFBF /* TerraTreadGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91698B561C0DB80A0D3C4EB1 /* TerraTreadGameView.swift */; };
+		E05B2721DA97414EFE640020 /* GameStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 089F78F983BFC26906D7F5CB /* GameStore.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		02A9B1FE87595E4F76BE8A22 /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
-		1508087E0F695F250F0EA119 /* images */ = {isa = PBXFileReference; lastKnownFileType = folder; name = images; path = ../images; sourceTree = SOURCE_ROOT; };
+		089F78F983BFC26906D7F5CB /* GameStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameStore.swift; sourceTree = "<group>"; };
 		126BE4827A6A9765BFBF52C5 /* StepSyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StepSyncService.swift; sourceTree = "<group>"; };
-		1622AD3403441DD85359A962 /* TerraTreadViewer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TerraTreadViewer.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		1C5B66B12F8B62E126A22832 /* app */ = {isa = PBXFileReference; lastKnownFileType = folder; name = app; path = ../app; sourceTree = SOURCE_ROOT; };
+		2078EC3F3638FEE86696DA71 /* GameEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameEngine.swift; sourceTree = "<group>"; };
 		211ECC31F9F36A986C17E341 /* TerraTreadViewerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerraTreadViewerApp.swift; sourceTree = "<group>"; };
 		3D595396ECE3CCC0B4D4A6A5 /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
-		618EACD2A56F507CA4B197EE /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		46D4520DAB196275A600D30E /* AuthWebSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthWebSheet.swift; sourceTree = "<group>"; };
+		5C6DD96EE04A5964A3DC3091 /* TerraTreadModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerraTreadModels.swift; sourceTree = "<group>"; };
 		7F708A204922AD36DB484958 /* AppConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfiguration.swift; sourceTree = "<group>"; };
-		8C55741C71AC305D80A0134A /* script.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; name = script.js; path = ../script.js; sourceTree = SOURCE_ROOT; };
-		9F77F3F5A3E618361E38F4F0 /* WebContainerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebContainerViewController.swift; sourceTree = "<group>"; };
-		A45E5B56420CF4B1B0C05E7A /* index.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; name = index.html; path = ../index.html; sourceTree = SOURCE_ROOT; };
+		91698B561C0DB80A0D3C4EB1 /* TerraTreadGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerraTreadGameView.swift; sourceTree = "<group>"; };
+		A775C06F56AB6C311C6BDAC4 /* GameBackendClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameBackendClient.swift; sourceTree = "<group>"; };
 		AAA4D53E0D1DF5757E8CEB81 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		BC40E145531ABF339BCDF790 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Assets.xcassets; path = TerraTreadViewer/Assets.xcassets; sourceTree = SOURCE_ROOT; };
-		C0E463C2A5A5D8F4D1A75AD2 /* style.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; name = style.css; path = ../style.css; sourceTree = SOURCE_ROOT; };
-		D81541006BD9A2E8F0F93680 /* TerraTreadWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerraTreadWebView.swift; sourceTree = "<group>"; };
-		F2654339E9A45216DE5FCF72 /* login.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; name = login.html; path = ../login.html; sourceTree = SOURCE_ROOT; };
+		CCDA97BB3111C9F7206A3D7B /* GamePersistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GamePersistence.swift; sourceTree = "<group>"; };
+		D33D56C76EB8BBD402E4C3E5 /* TerraTread.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TerraTread.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		ECE7AAAE5D802100C75D8B47 /* CityBoardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CityBoardView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
 		13B04F3F931ECD78DD0C5A21 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				1622AD3403441DD85359A962 /* TerraTreadViewer.app */,
+				D33D56C76EB8BBD402E4C3E5 /* TerraTread.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -54,14 +52,8 @@
 		91D61A1FA00906FE8254D06B = {
 			isa = PBXGroup;
 			children = (
-				1C5B66B12F8B62E126A22832 /* app */,
 				BC40E145531ABF339BCDF790 /* Assets.xcassets */,
 				ECD1E962D46D98156B41CBEC /* Configs */,
-				8C55741C71AC305D80A0134A /* script.js */,
-				A45E5B56420CF4B1B0C05E7A /* index.html */,
-				1508087E0F695F250F0EA119 /* images */,
-				F2654339E9A45216DE5FCF72 /* login.html */,
-				C0E463C2A5A5D8F4D1A75AD2 /* style.css */,
 				D55E9D1792E9E983883E310C /* TerraTreadViewer */,
 				13B04F3F931ECD78DD0C5A21 /* Products */,
 			);
@@ -71,12 +63,17 @@
 			isa = PBXGroup;
 			children = (
 				7F708A204922AD36DB484958 /* AppConfiguration.swift */,
+				46D4520DAB196275A600D30E /* AuthWebSheet.swift */,
+				ECE7AAAE5D802100C75D8B47 /* CityBoardView.swift */,
+				A775C06F56AB6C311C6BDAC4 /* GameBackendClient.swift */,
+				2078EC3F3638FEE86696DA71 /* GameEngine.swift */,
+				CCDA97BB3111C9F7206A3D7B /* GamePersistence.swift */,
+				089F78F983BFC26906D7F5CB /* GameStore.swift */,
 				AAA4D53E0D1DF5757E8CEB81 /* Info.plist */,
-				618EACD2A56F507CA4B197EE /* RootView.swift */,
 				126BE4827A6A9765BFBF52C5 /* StepSyncService.swift */,
+				91698B561C0DB80A0D3C4EB1 /* TerraTreadGameView.swift */,
+				5C6DD96EE04A5964A3DC3091 /* TerraTreadModels.swift */,
 				211ECC31F9F36A986C17E341 /* TerraTreadViewerApp.swift */,
-				D81541006BD9A2E8F0F93680 /* TerraTreadWebView.swift */,
-				9F77F3F5A3E618361E38F4F0 /* WebContainerViewController.swift */,
 			);
 			path = TerraTreadViewer;
 			sourceTree = "<group>";
@@ -93,22 +90,22 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		1D948B236A71589E3E77FED7 /* TerraTreadViewer */ = {
+		5BD4DB706A74CFC4AB510185 /* TerraTread */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 0BB8276ED76E69439F8CA97A /* Build configuration list for PBXNativeTarget "TerraTreadViewer" */;
+			buildConfigurationList = 9FA11E9AF55E3106D25C13C2 /* Build configuration list for PBXNativeTarget "TerraTread" */;
 			buildPhases = (
-				27D3F044D227323B10411648 /* Sources */,
-				22D4109342FA857AECF8912B /* Resources */,
+				D5FB25FAB8D2AE3287C08702 /* Sources */,
+				97FC492B25CB966A85028568 /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
-			name = TerraTreadViewer;
+			name = TerraTread;
 			packageProductDependencies = (
 			);
-			productName = TerraTreadViewer;
-			productReference = 1622AD3403441DD85359A962 /* TerraTreadViewer.app */;
+			productName = TerraTread;
+			productReference = D33D56C76EB8BBD402E4C3E5 /* TerraTread.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -120,7 +117,7 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
-					1D948B236A71589E3E77FED7 = {
+					5BD4DB706A74CFC4AB510185 = {
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -139,45 +136,100 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				1D948B236A71589E3E77FED7 /* TerraTreadViewer */,
+				5BD4DB706A74CFC4AB510185 /* TerraTread */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		22D4109342FA857AECF8912B /* Resources */ = {
+		97FC492B25CB966A85028568 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				71320E447F8C9C12C32930BB /* index.html in Resources */,
-				2131EB63AF6C53A8DBBA4653 /* login.html in Resources */,
-				F66985AFA74FF60CC3200C58 /* script.js in Resources */,
-				A0E1633803AB4070EE89AA6A /* style.css in Resources */,
-				0E80E92A5D11522D1B931C35 /* app in Resources */,
-				F5781F71AD8C63792A6E4D79 /* images in Resources */,
-				8DA4210C6923592BF75187F4 /* Assets.xcassets in Resources */,
+				8D1414167D4A3787A61AF035 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		27D3F044D227323B10411648 /* Sources */ = {
+		D5FB25FAB8D2AE3287C08702 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				760E0AE6FCE9551F0FC5106D /* AppConfiguration.swift in Sources */,
-				C56B82CA3011B822372598BD /* RootView.swift in Sources */,
-				2AE07D4C10C3B4862C7A81E8 /* StepSyncService.swift in Sources */,
-				4CD87AEC58EBDECA204DBBF0 /* TerraTreadViewerApp.swift in Sources */,
-				81421770AE7E1AEB84010D62 /* TerraTreadWebView.swift in Sources */,
-				D861B29ADB98F16B46FF9BFC /* WebContainerViewController.swift in Sources */,
+				7DBBB8B4EE5A79B727EE550B /* AppConfiguration.swift in Sources */,
+				45CC41A2C38087FAD5F74F20 /* AuthWebSheet.swift in Sources */,
+				12C7B2333C6705FAB264A838 /* CityBoardView.swift in Sources */,
+				1331CFBFE276B18C51077459 /* GameBackendClient.swift in Sources */,
+				6B4557E891DEC8E9320494B1 /* GameEngine.swift in Sources */,
+				A4E1D00F11FFD9BCFC8D3AE9 /* GamePersistence.swift in Sources */,
+				E05B2721DA97414EFE640020 /* GameStore.swift in Sources */,
+				8180D29B61DA32668C4D8604 /* StepSyncService.swift in Sources */,
+				B361D9A0B6F3B00ED491BFBF /* TerraTreadGameView.swift in Sources */,
+				18F5EFB3944EEBDC19F55C52 /* TerraTreadModels.swift in Sources */,
+				7EBFD8C6E2FA77D83101AF21 /* TerraTreadViewerApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
+		1869A5B36C15753E20160080 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 02A9B1FE87595E4F76BE8A22 /* Debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = DUC3W4FH49;
+				INFOPLIST_FILE = TerraTreadViewer/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Terra Tread";
+				INFOPLIST_KEY_LSRequiresIPhoneOS = YES;
+				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoadsInWebContent = YES;
+				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsLocalNetworking = YES;
+				INFOPLIST_KEY_NSMotionUsageDescription = "Terra Tread uses your daily step count to power the city builder.";
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen = "[:]";
+				INFOPLIST_KEY_UIRequiresFullScreen = NO;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.terratread.viewer;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		329CA54AF509D042A72C6177 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 3D595396ECE3CCC0B4D4A6A5 /* Release.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = DUC3W4FH49;
+				INFOPLIST_FILE = TerraTreadViewer/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Terra Tread";
+				INFOPLIST_KEY_LSRequiresIPhoneOS = YES;
+				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoadsInWebContent = YES;
+				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsLocalNetworking = YES;
+				INFOPLIST_KEY_NSMotionUsageDescription = "Terra Tread uses your daily step count to power the city builder.";
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen = "[:]";
+				INFOPLIST_KEY_UIRequiresFullScreen = NO;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.terratread.viewer;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		3FE3841260EEDA51BEB7D4C2 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -234,68 +286,12 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.terratread.viewer;
-				PRODUCT_NAME = TerraTreadViewer;
+				PRODUCT_NAME = TerraTread;
 				SDKROOT = iphoneos;
 				SUPPORTS_MACCATALYST = NO;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Release;
-		};
-		811020A77B0CCEB0AD13ED03 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = 02A9B1FE87595E4F76BE8A22 /* Debug.xcconfig */;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = DUC3W4FH49;
-				INFOPLIST_FILE = TerraTreadViewer/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Terra Tread";
-				INFOPLIST_KEY_LSRequiresIPhoneOS = YES;
-				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoadsInWebContent = YES;
-				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsLocalNetworking = YES;
-				INFOPLIST_KEY_NSMotionUsageDescription = "Terra Tread uses your daily step count to power the city builder.";
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen = "[:]";
-				INFOPLIST_KEY_UIRequiresFullScreen = NO;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.terratread.viewer;
-				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
-		8BD6F6062F557ADBEE550856 /* Release */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = 3D595396ECE3CCC0B4D4A6A5 /* Release.xcconfig */;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = DUC3W4FH49;
-				INFOPLIST_FILE = TerraTreadViewer/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "Terra Tread";
-				INFOPLIST_KEY_LSRequiresIPhoneOS = YES;
-				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsArbitraryLoadsInWebContent = YES;
-				INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsLocalNetworking = YES;
-				INFOPLIST_KEY_NSMotionUsageDescription = "Terra Tread uses your daily step count to power the city builder.";
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen = "[:]";
-				INFOPLIST_KEY_UIRequiresFullScreen = NO;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.terratread.viewer;
-				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
@@ -363,7 +359,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.terratread.viewer;
-				PRODUCT_NAME = TerraTreadViewer;
+				PRODUCT_NAME = TerraTread;
 				SDKROOT = iphoneos;
 				SUPPORTS_MACCATALYST = NO;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
@@ -376,11 +372,11 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		0BB8276ED76E69439F8CA97A /* Build configuration list for PBXNativeTarget "TerraTreadViewer" */ = {
+		9FA11E9AF55E3106D25C13C2 /* Build configuration list for PBXNativeTarget "TerraTread" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				811020A77B0CCEB0AD13ED03 /* Debug */,
-				8BD6F6062F557ADBEE550856 /* Release */,
+				1869A5B36C15753E20160080 /* Debug */,
+				329CA54AF509D042A72C6177 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

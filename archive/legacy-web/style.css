@@ -922,7 +922,7 @@ body.build-mode-live .build-panel {
 }
 
 #grid::after {
-  background-image: url("./images/grass-texture1.png");
+  background-image: url("../images/grass-texture1.png");
   background-repeat: repeat;
   background-size: 180px 180px;
   opacity: 0.12;
